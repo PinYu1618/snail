@@ -1,0 +1,22 @@
+[package]
+name = "snail"
+version = "0.1.0"
+edition = "2021"
+authors = ["Pin-Yu Chen <pycc1618@gmail.com>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
+[dependencies]
+lazy_static = { version = "1.0", features = ["spin_no_std"] }
+spin = "0.5.2"
+riscv = { git = "https://github.com/rcore-os/riscv", features = ["inline-asm"] }
+buddy_system_allocator = "0.6"
+bitflags = "1.2.1"
+log = "0.4"
+snail-fs = { path = "../fs" }
