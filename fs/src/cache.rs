@@ -78,19 +78,16 @@ impl BlockCacher {
     }
 
     fn cache_block(&mut self, id: usize, dev: Arc<dyn BlockDevice>) -> Arc<Mutex<BlockCache>> {
-        if let Some(pair) = self.queue
-            .iter()
-            .find(|pair| pair.0 == id) {
-                Arc::clone(&pair.1)
+        if let Some(pair) = self.queue.iter()
+        .find(|pair| pair.0 == id) {
+            Arc::clone(&pair.1)
         } else {
             // substitute
             if self.queue.len() == BLOCK_CACHE_LIMIT {
                 // from front to tail
-                if let Some((idx, _)) = self.queue
-                    .iter()
-                    .enumerate()
-                    .find(|(_, pair)| Arc::strong_count(&pair.1) == 1) {
-                        self.queue.drain(idx..=idx);
+                if let Some((idx, _)) = self.queue.iter().enumerate()
+                .find(|(_, pair)| Arc::strong_count(&pair.1) == 1) {
+                    self.queue.drain(idx..=idx);
                 } else {
                     panic!("Run out of BlockCache!");
                 }
