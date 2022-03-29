@@ -26,11 +26,12 @@ mod fs;
 #[no_mangle]
 pub extern "C" fn kmain() -> ! {
     clear_bss();
-    println!("[snail] Hyy, there.");
+    mm::init();
     logging::init();
     trap::init();
     trap::enable_timer_interrupt();
     timer::set_next_trigger();
+    println!("[snail] Hyy, there.");
     loop {}
 }
 

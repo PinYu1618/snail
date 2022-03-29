@@ -6,7 +6,7 @@ static HEAP_ALLOCATOR: LockedHeap = LockedHeap::empty();
 
 static mut HEAP_SPACE: [u8; KHEAP_SZ] = [0; KHEAP_SZ];
 
-pub fn init_heap() {
+pub fn init() {
     unsafe {
         HEAP_ALLOCATOR
             .lock()
