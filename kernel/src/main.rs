@@ -30,6 +30,7 @@ pub extern "C" fn kmain() -> ! {
     logging::init();
     trap::init();
     trap::enable_timer_interrupt();
+    timer::set_next_trigger();
     loop {}
 }
 
