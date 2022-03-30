@@ -8,6 +8,7 @@
 extern crate bitflags;
 extern crate alloc;
 
+use log::info;
 use core::arch::global_asm;
 
 #[macro_use]
@@ -26,12 +27,12 @@ mod fs;
 #[no_mangle]
 pub extern "C" fn kmain() -> ! {
     clear_bss();
-    mm::init();
     logging::init();
+    mm::init();
     trap::init();
     trap::enable_timer_interrupt();
     timer::set_next_trigger();
-    println!("[snail] Hyy, there.");
+    info!("Hyy, there.");
     loop {}
 }
 

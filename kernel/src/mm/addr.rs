@@ -1,6 +1,7 @@
 use crate::config::PAGE_SZ_BITS;
 use crate::config::PAGE_SZ;
 use core::fmt::Debug;
+use super::PageTableEntry;
 
 const PA_WIDTH_SV39: usize = 56;
 const PPN_WIDTH_SV39: usize = PA_WIDTH_SV39 - PAGE_SZ_BITS;    // 56 - 12
@@ -69,6 +70,16 @@ impl PhysPageNr {
             core::slice::from_raw_parts_mut(
                 pa.as_usize() as *mut u8,
                 PAGE_SZ,
+            )
+        }
+    }
+
+    pub fn pte_arr(&self) -> &'static mut [PageTableEntry] {
+        let pa: PhysAddr = (*self).into();
+        unsafe {
+            core::slice::from_raw_parts_mut(
+                pa.as_usize() as *mut PageTableEntry,
+                512
             )
         }
     }
