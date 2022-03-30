@@ -11,7 +11,7 @@ pub trait FrameAllocator {
 }
 
 pub struct FrameTracker {
-    pub ppn: PhysPageNr,
+    ppn: PhysPageNr,
 }
 
 pub struct StackFrameAllocator {
@@ -29,6 +29,8 @@ impl FrameTracker {
         }
         Self { ppn }
     }
+
+    pub fn ppn(&self) -> PhysPageNr { self.ppn }
 }
 
 type FrameAllocatorImpl = StackFrameAllocator;

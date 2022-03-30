@@ -35,9 +35,13 @@ impl PageTable {
     pub fn new() -> Self {
         let frame = alloc_frame().unwrap();
         PageTable {
-            root_ppn: frame.ppn,
+            root_ppn: frame.ppn(),
             frames: vec![frame],
         }
+    }
+
+    pub fn token(&self) -> usize {
+        8_usize << 60 | self.root_ppn.as_usize()
     }
 }
 
@@ -47,17 +51,21 @@ impl PageTableEntry {
             bits: ppn.as_usize() << 10 | flags.bits as usize,
         }
     }
+
     pub fn empty() -> Self {
         PageTableEntry {
             bits: 0,
         }
     }
+
     pub fn pnn(&self) -> PhysPageNr {
         (self.bits >> 10 & ((1_usize << 44) - 1)).into()
     }
+
     pub fn flags(&self) -> PTEFlags {
         PTEFlags::from_bits(self.bits as u8).unwrap()
     }
+
     pub fn is_valid(&self) -> bool {
         (self.flags() & PTEFlags::V) != PTEFlags::empty()
     }
@@ -67,6 +75,7 @@ impl UserBuffer {
     pub fn new(buffers: Vec<&'static mut [u8]>) -> Self {
         Self { buffers }
     }
+
     pub fn len(&self) -> usize {
         let mut total: usize = 0;
         for b in self.buffers.iter() {
