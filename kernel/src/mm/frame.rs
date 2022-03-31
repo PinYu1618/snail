@@ -1,15 +1,16 @@
 use lazy_static::*;
 use alloc::vec::Vec;
-use super::{ PhysAddr, PhysPageNr };
+use super::addr::{ PhysAddr, PhysPageNr };
 use crate::config::MEM_END;
 use crate::sync::UPSafeCell;
 
-pub trait FrameAllocator {
+pub trait FrameAlloc {
     fn new() -> Self;
     fn alloc(&mut self) -> Option<PhysPageNr>;
     fn dealloc(&mut self, ppn: PhysPageNr);
 }
 
+#[derive(Debug)]
 pub struct FrameTracker {
     ppn: PhysPageNr,
 }
@@ -33,7 +34,13 @@ impl FrameTracker {
     pub fn ppn(&self) -> PhysPageNr { self.ppn }
 }
 
-type FrameAllocatorImpl = StackFrameAllocator;
+impl Drop for FrameTracker {
+    fn drop(&mut self) {
+        dealloc_frame(self.ppn);
+    }
+}
+
+type FrameAllocImpl = StackFrameAllocator;
 
 impl StackFrameAllocator {
     pub fn init(&mut self, l: PhysPageNr, r: PhysPageNr) {
@@ -41,7 +48,7 @@ impl StackFrameAllocator {
         self.end = r.as_usize();
     }
 }
-impl FrameAllocator for StackFrameAllocator {
+impl FrameAlloc for StackFrameAllocator {
     fn new() -> Self {
         Self {
             current: 0,
@@ -76,8 +83,8 @@ impl FrameAllocator for StackFrameAllocator {
 }
 
 lazy_static! {
-    pub static ref FRAME_ALLOCATOR: UPSafeCell<FrameAllocatorImpl> = unsafe {
-        UPSafeCell::new(FrameAllocatorImpl::new())
+    pub static ref FRAME_ALLOCATOR: UPSafeCell<FrameAllocImpl> = unsafe {
+        UPSafeCell::new(FrameAllocImpl::new())
     };
 }
 
@@ -95,4 +102,27 @@ pub fn alloc_frame() -> Option<FrameTracker> {
         .exclusive_access()
         .alloc()
         .map(FrameTracker::new)
+}
+
+pub fn dealloc_frame(ppn: PhysPageNr) {
+    FRAME_ALLOCATOR.exclusive_access().dealloc(ppn);
+}
+
+// testing
+#[cfg(debug)]
+pub fn test_frame_allocator() {
+    let mut v: Vec<FrameTracker> = Vec::new();
+    for i in 0..5 {
+        let frame = alloc_frame().unwrap();
+        println!("{:?}", frame);
+        v.push(frame);
+    }
+    v.clear();
+    for i in 0..5 {
+        let frame = alloc_frame().unwrap();
+        println!("{:?}", frame);
+        v.push(frame);
+    }
+    drop(v);
+    println!("test_frame_allocator passed!");
 }

@@ -1,18 +1,25 @@
 mod heap;
-pub mod addr;
+mod addr;
 mod frame;
 pub mod page;
-pub mod memset;
+mod memset;
 
-pub use addr::{ VirtAddr, PhysAddr, VirtPageNr, PhysPageNr, VPNRange };
-pub use frame::{ FrameTracker, StackFrameAllocator, alloc_frame };
+
+use frame::{ FrameTracker, StackFrameAllocator, alloc_frame };
 use log::info;
-pub use page::{ PageTable, PageTableEntry, UserBuffer };
-pub use memset::{ MapType, MapPermission, MapArea, MemorySet, KERNEL_SPACE };
+use page::{ PageTable, PageTableEntry, UserBuffer };
+use memset::{ MapType, MapPermission, MapArea, MemorySet, KERNEL_SPACE };
 
 pub fn init() {
     heap::init();
+    #[cfg(debug)]
+    heap::heap_test();
+
     frame::init();
+    #[cfg(debug)]
+    frame::test_frame_allocator();
+
     KERNEL_SPACE.exclusive_access().init();
+    memset::test_remap();
     info!("mm init done!");
 }

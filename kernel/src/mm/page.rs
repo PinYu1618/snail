@@ -1,7 +1,8 @@
 use bitflags::*;
 use alloc::vec;
 use alloc::vec::Vec;
-use super::{ VirtPageNr, PhysPageNr, FrameTracker, alloc_frame, VirtAddr, PhysAddr };
+use super::{ FrameTracker, alloc_frame };
+use super::addr::{ VirtAddr, PhysAddr, VirtPageNr, PhysPageNr };
 
 bitflags! {
     pub struct PTEFlags: u8 {
@@ -16,6 +17,7 @@ bitflags! {
     }
 }
 
+#[derive(Debug)]
 pub struct PageTable {
     root_ppn: PhysPageNr,
     frames: Vec<FrameTracker>,
@@ -45,7 +47,7 @@ impl PageTable {
     }
 
     pub fn translate(&self, vpn: VirtPageNr) -> Option<PageTableEntry> {
-        self.find_pte(vpn).map(|pte| *pte)
+        self.find_pte(vpn).map(|pte| pte.clone())
     }
 
     pub fn translate_va(&self, va: VirtAddr) -> Option<PhysAddr> {
@@ -73,8 +75,8 @@ impl PageTable {
         let idxs = vpn.indexes();
         let mut ppn = self.root_ppn;
         let mut res: Option<&mut PageTableEntry> = None;
-        for (i, idx) in idxs.iter().enumerate() {
-            let pte = &mut ppn.pte_arr()[*idx];
+        for i in 0..3 {
+            let pte = &mut ppn.pte_arr()[idxs[i]];
             if i == 2 {
                 res = Some(pte);
                 break;
@@ -93,8 +95,8 @@ impl PageTable {
         let idxs = vpn.indexes();
         let mut ppn = self.root_ppn;
         let mut res: Option<&mut PageTableEntry> = None;
-        for (i, idx) in idxs.iter().enumerate() {
-            let pte = &mut ppn.pte_arr()[*idx];
+        for i in 0..3 {
+            let pte = &mut ppn.pte_arr()[idxs[i]];
             if i == 2 {
                 res = Some(pte);
                 break;
@@ -131,6 +133,18 @@ impl PageTableEntry {
 
     pub fn is_valid(&self) -> bool {
         (self.flags() & PTEFlags::V) != PTEFlags::empty()
+    }
+
+    pub fn is_readable(&self) -> bool {
+        (self.flags() & PTEFlags::R) != PTEFlags::empty()
+    }
+
+    pub fn is_writable(&self) -> bool {
+        (self.flags() & PTEFlags::W) != PTEFlags::empty()
+    }
+
+    pub fn is_executable(&self) -> bool {
+        (self.flags() & PTEFlags::X) != PTEFlags::empty()
     }
 }
 

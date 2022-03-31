@@ -1,11 +1,13 @@
 use bitflags::*;
 use lazy_static::*;
-use log::info;
+use log::{ info, debug };
 use alloc::sync::Arc;
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use riscv::register::satp;
-use super::{ VirtAddr, VirtPageNr, FrameTracker, PageTable, VPNRange, PhysPageNr, alloc_frame, page::PTEFlags };
+use super::addr::{ VirtAddr, VirtPageNr, VPNRange, PhysPageNr };
+use super::page::{ PageTable, PTEFlags };
+use super::{ FrameTracker, alloc_frame };
 use crate::{sync::UPSafeCell, config::{PAGE_SZ, MEM_END, MMIO}, mm::addr::Step};
 use core::arch::asm;
 
@@ -16,7 +18,7 @@ extern "C" {
     fn erodata();
     fn sdata();
     fn edata();
-    fn sbss();
+    fn sbss_with_stack();
     fn ebss();
     fn ekernel();
 }
@@ -36,6 +38,7 @@ bitflags! {
     }
 }
 
+#[derive(Debug)]
 pub struct MapArea {
     vpn_range: VPNRange,
     data_frames: BTreeMap<VirtPageNr, FrameTracker>,
@@ -43,6 +46,7 @@ pub struct MapArea {
     map_perm: MapPermission,
 }
 
+#[derive(Debug)]
 pub struct MemorySet {
     page_table: PageTable,
     areas: Vec<MapArea>,
@@ -117,13 +121,14 @@ impl MemorySet {
     // without kernel stack
     pub fn new_kernel() -> Self {
         let mut memset = Self::new_bare();
+        debug!("kernel mem set new bare: {:?}", memset);
         
         // map kernel sections
         info!("Mapping kernel sections:");
         info!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
         info!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
         info!(".data [{:#x}, {:#x})", sdata as usize, edata as usize);
-        info!(".bss [{:#x}, {:#x})", sbss as usize, ebss as usize);
+        info!(".bss [{:#x}, {:#x})", sbss_with_stack as usize, ebss as usize);
 
         info!("Mapping .text section...");
         memset.push(
@@ -161,7 +166,7 @@ impl MemorySet {
         info!("Mapping .bss section...");
         memset.push(
             MapArea::new(
-                (sbss as usize).into(),
+                (sbss_with_stack as usize).into(),
                 (ebss as usize).into(),
                 MapType::Identical,
                 MapPermission::R | MapPermission::W,
@@ -192,6 +197,8 @@ impl MemorySet {
                 None,
             );
         }
+
+        debug!("kernel mem set: {:?}", memset);
         
         memset
     }
@@ -222,4 +229,28 @@ lazy_static!{
                 )
             }
         );
+}
+
+#[allow(unused)]
+pub fn test_remap() {
+    let mut kernel_space = KERNEL_SPACE.exclusive_access();
+    let mid_text: VirtAddr = ((stext as usize + etext as usize) / 2).into();
+    let mid_rodata: VirtAddr = ((srodata as usize + erodata as usize) / 2).into();
+    let mid_data: VirtAddr = ((sdata as usize + edata as usize) / 2).into();
+    assert!(!kernel_space
+        .page_table
+        .translate(mid_text.floor())
+        .unwrap()
+        .is_writable(),);
+    assert!(!kernel_space
+        .page_table
+        .translate(mid_rodata.floor())
+        .unwrap()
+        .is_writable(),);
+    assert!(!kernel_space
+        .page_table
+        .translate(mid_data.floor())
+        .unwrap()
+        .is_executable(),);
+    println!("remap_test passed!");
 }

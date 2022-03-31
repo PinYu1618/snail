@@ -1,7 +1,7 @@
 use crate::config::PAGE_SZ_BITS;
 use crate::config::PAGE_SZ;
+use super::page::PageTableEntry;
 use core::fmt::Debug;
-use super::PageTableEntry;
 
 const PA_WIDTH_SV39: usize = 56;
 const PPN_WIDTH_SV39: usize = PA_WIDTH_SV39 - PAGE_SZ_BITS;    // 56 - 12
@@ -9,11 +9,11 @@ const VA_WIDTH_SV39: usize = 39;
 const VPN_WIDTH_SV39: usize = VA_WIDTH_SV39 - PAGE_SZ_BITS;    // 39 - 12
 
 #[repr(C)]
-#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
 pub struct PhysAddr(usize);
 
 #[repr(C)]
-#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
 pub struct PhysPageNr(usize);
 
 #[repr(C)]
@@ -24,7 +24,7 @@ pub struct VirtAddr(usize);
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
 pub struct VirtPageNr(usize);
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Range<T>
 where
     T: Step + Copy + PartialEq + PartialOrd + Debug
@@ -65,7 +65,7 @@ impl PhysAddr {
 
 impl PhysPageNr {
     pub fn bytes_arr(&self) -> &'static mut [u8] {
-        let pa: PhysAddr = (*self).into();
+        let pa: PhysAddr = (*self).clone().into();
         unsafe {
             core::slice::from_raw_parts_mut(
                 pa.as_usize() as *mut u8,
@@ -75,12 +75,19 @@ impl PhysPageNr {
     }
 
     pub fn pte_arr(&self) -> &'static mut [PageTableEntry] {
-        let pa: PhysAddr = (*self).into();
+        let pa: PhysAddr = (*self).clone().into();
         unsafe {
             core::slice::from_raw_parts_mut(
                 pa.as_usize() as *mut PageTableEntry,
                 512
             )
+        }
+    }
+
+    pub fn get_mut<T>(&self) -> &'static mut T {
+        let pa: PhysAddr = self.clone().into();
+        unsafe {
+            (pa.as_usize() as *mut T).as_mut().unwrap()
         }
     }
 
