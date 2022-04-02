@@ -20,6 +20,7 @@ pub fn init() {
     frame::test_frame_allocator();
 
     KERNEL_SPACE.exclusive_access().init();
+    #[cfg(debug)]
     memset::test_remap();
     info!("mm init done!");
 }

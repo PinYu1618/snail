@@ -174,6 +174,18 @@ impl From<PhysPageNr> for PhysAddr {
     fn from(v: PhysPageNr) -> Self { Self(v.0 << PAGE_SZ_BITS) }
 }
 
+// conversions between va and vpn
+
+impl From<VirtAddr> for VirtPageNr {
+    fn from(va: VirtAddr) -> Self {
+        assert_eq!(va.page_offset(), 0);
+        va.floor()
+    }
+}
+impl From<VirtPageNr> for VirtAddr {
+    fn from(v: VirtPageNr) -> Self { Self(v.0 << PAGE_SZ_BITS) }
+}
+
 // iterating
 
 impl Step for VirtPageNr {

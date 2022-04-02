@@ -1,5 +1,6 @@
 pub mod context;
 
+use log::{ error, trace };
 use riscv::register::{ stvec, scause, stval, sie };
 use riscv::register::scause::{ Trap, Exception, Interrupt };
 use riscv::register::mtvec::TrapMode;
@@ -35,13 +36,15 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
         }
         Trap::Exception(Exception::StoreFault) |
         Trap::Exception(Exception::StorePageFault) => {
-            println!("[kernel] PageFault in application.");
+            error!("PageFault :(");
+            panic!("Bobo was panicked due to page fault!");
         }
         Trap::Exception(Exception::IllegalInstruction) => {
-            println!("[kernel] Illegal Instruction in application.");
+            error!("Illegal Instruction in application. Don't forget to improve this handler later");
+            panic!("Bobo was panicked due to illegal instruction in application.");
         }
         _ => {
-            panic!("[kernel] Unsupported trap {:?}, stval = {:#x}!", scause.cause(), stval);
+            panic!("Bobo was panicked due to unsupported trap {:?}, stval = {:#x}!", scause.cause(), stval);
         }
     }
     cx

@@ -5,9 +5,10 @@ use alloc::sync::Arc;
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use riscv::register::satp;
-use super::addr::{ VirtAddr, VirtPageNr, VPNRange, PhysPageNr };
+use super::addr::{ VirtAddr, VirtPageNr, VPNRange, PhysPageNr, PhysAddr };
 use super::page::{ PageTable, PTEFlags };
 use super::{ FrameTracker, alloc_frame };
+use crate::config::TRAMPOLINE;
 use crate::{sync::UPSafeCell, config::{PAGE_SZ, MEM_END, MMIO}, mm::addr::Step};
 use core::arch::asm;
 
@@ -21,6 +22,7 @@ extern "C" {
     fn sbss_with_stack();
     fn ebss();
     fn ekernel();
+    fn strampoline();
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -121,8 +123,8 @@ impl MemorySet {
     // without kernel stack
     pub fn new_kernel() -> Self {
         let mut memset = Self::new_bare();
-        debug!("kernel mem set new bare: {:?}", memset);
-        
+        memset.map_trampoline();
+
         // map kernel sections
         info!("Mapping kernel sections:");
         info!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
@@ -197,8 +199,6 @@ impl MemorySet {
                 None,
             );
         }
-
-        debug!("kernel mem set: {:?}", memset);
         
         memset
     }
@@ -218,6 +218,14 @@ impl MemorySet {
         }
         self.areas.push(map_area);
     }
+
+    fn map_trampoline(&mut self) {
+        self.page_table.map(
+            VirtAddr::from(TRAMPOLINE).into(),
+            PhysAddr::from(strampoline as usize).into(),
+            PTEFlags::R | PTEFlags::X,
+        );
+    }
 }
 
 lazy_static!{
@@ -231,7 +239,7 @@ lazy_static!{
         );
 }
 
-#[allow(unused)]
+#[cfg(debug)]
 pub fn test_remap() {
     let mut kernel_space = KERNEL_SPACE.exclusive_access();
     let mid_text: VirtAddr = ((stext as usize + etext as usize) / 2).into();
