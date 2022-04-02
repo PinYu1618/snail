@@ -1,7 +1,16 @@
+use crate::read;
+
 use super::write;
 use core::fmt::{ self, Write };
 
+const STDIN: usize = 0;
 const STDOUT: usize = 1;
+
+pub fn getchar() -> u8 {
+    let mut c = [0_u8; 1];
+    read(STDIN, &mut c);
+    c[0]
+}
 
 struct Stdout;
 
