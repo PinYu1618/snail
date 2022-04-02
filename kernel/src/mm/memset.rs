@@ -6,8 +6,8 @@ use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use riscv::register::satp;
 use super::addr::{ VirtAddr, VirtPageNr, VPNRange, PhysPageNr, PhysAddr };
+use super::frame::{FrameTracker, alloc_frame};
 use super::page::{ PageTable, PTEFlags };
-use super::{ FrameTracker, alloc_frame };
 use crate::config::TRAMPOLINE;
 use crate::{sync::UPSafeCell, config::{PAGE_SZ, MEM_END, MMIO}, mm::addr::Step};
 use core::arch::asm;
@@ -40,7 +40,7 @@ bitflags! {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct MapArea {
     vpn_range: VPNRange,
     data_frames: BTreeMap<VirtPageNr, FrameTracker>,
@@ -48,7 +48,7 @@ pub struct MapArea {
     map_perm: MapPermission,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct MemorySet {
     page_table: PageTable,
     areas: Vec<MapArea>,
@@ -209,6 +209,10 @@ impl MemorySet {
             satp::write(token);
             asm!("sfence.vma");
         }
+    }
+
+    pub fn token(&self) -> usize {
+        unimplemented!()
     }
 
     fn push(&mut self, mut map_area: MapArea, data: Option<&[u8]>) {

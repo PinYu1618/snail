@@ -1,8 +1,7 @@
 use bitflags::*;
 use alloc::vec;
 use alloc::vec::Vec;
-use super::{ FrameTracker, alloc_frame };
-use super::addr::{ VirtAddr, PhysAddr, VirtPageNr, PhysPageNr };
+use super::{addr::{ VirtAddr, PhysAddr, VirtPageNr, PhysPageNr }, frame::{FrameTracker, alloc_frame}};
 
 bitflags! {
     pub struct PTEFlags: u8 {
@@ -17,7 +16,7 @@ bitflags! {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct PageTable {
     root_ppn: PhysPageNr,
     frames: Vec<FrameTracker>,

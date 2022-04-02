@@ -10,7 +10,7 @@ pub trait FrameAlloc {
     fn dealloc(&mut self, ppn: PhysPageNr);
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct FrameTracker {
     ppn: PhysPageNr,
 }

@@ -1,14 +1,11 @@
-mod heap;
-mod addr;
-mod frame;
+pub mod heap;
+pub mod addr;
+pub mod frame;
 pub mod page;
-mod memset;
+pub mod memset;
 
-
-use frame::{ FrameTracker, StackFrameAllocator, alloc_frame };
 use log::info;
-use page::{ PageTable, PageTableEntry, UserBuffer };
-use memset::{ MapType, MapPermission, MapArea, MemorySet, KERNEL_SPACE };
+use memset::KERNEL_SPACE;
 
 pub fn init() {
     heap::init();
