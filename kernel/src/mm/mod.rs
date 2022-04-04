@@ -2,22 +2,23 @@ pub mod heap;
 pub mod addr;
 pub mod frame;
 pub mod page;
+pub mod map;
 pub mod memset;
 
 use log::info;
-use memset::KERNEL_SPACE;
+use memset::KSPACE;
 
 pub fn init() {
     heap::init();
-    #[cfg(debug)]
+    #[cfg(dbg)]
     heap::heap_test();
 
     frame::init();
-    #[cfg(debug)]
+    #[cfg(dbg)]
     frame::test_frame_allocator();
 
-    KERNEL_SPACE.exclusive_access().init();
-    #[cfg(debug)]
+    KSPACE.exclusive_access().init();
+    #[cfg(dbg)]
     memset::test_remap();
     info!("mm init done!");
 }

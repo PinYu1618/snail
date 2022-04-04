@@ -1,8 +1,11 @@
 use lazy_static::*;
+
 use alloc::vec::Vec;
-use super::addr::{ PhysAddr, PhysPageNr };
+
 use crate::config::MEM_END;
-use crate::sync::UPSafeCell;
+use crate::sync::up::UPSafeCell;
+
+use super::addr::{ PhysAddr, PhysPageNr };
 
 pub trait FrameAlloc {
     fn new() -> Self;
@@ -109,7 +112,7 @@ pub fn dealloc_frame(ppn: PhysPageNr) {
 }
 
 // testing
-#[cfg(debug)]
+#[cfg(dbg)]
 pub fn test_frame_allocator() {
     let mut v: Vec<FrameTracker> = Vec::new();
     for i in 0..5 {

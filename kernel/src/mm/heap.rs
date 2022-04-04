@@ -1,4 +1,5 @@
 use buddy_system_allocator::LockedHeap;
+
 use crate::config::KHEAP_SZ;
 
 #[global_allocator]
@@ -19,7 +20,7 @@ pub fn handle_alloc_error(layout: core::alloc::Layout) -> ! {
     panic!("Heap allocation error, layout = {:?}", layout);
 }
 
-#[cfg(debug)]
+#[cfg(dbg)]
 pub fn heap_test() {
     use alloc::boxed::Box;
     use alloc::vec::Vec;
