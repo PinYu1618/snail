@@ -144,6 +144,7 @@ dependencies = [
  "log",
  "riscv",
  "snail-fs",
+ "snail-user",
  "spin 0.5.2",
  "xmas-elf",
 ]
@@ -154,6 +155,13 @@ version = "0.1.0"
 dependencies = [
  "lazy_static",
  "spin 0.5.2",
+]
+
+[[package]]
+name = "snail-user"
+version = "0.1.0"
+dependencies = [
+ "riscv",
 ]
 
 [[package]]

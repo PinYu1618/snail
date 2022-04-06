@@ -2,7 +2,7 @@
 #![allow(unused)]
 
 #[macro_use]
-mod console;
+pub mod console;
 mod syscall;
 
 use syscall::*;
@@ -36,6 +36,10 @@ pub fn waitpid(pid: usize, exit_code: &mut i32) -> isize {
         }
     }
 }
+
+pub fn fork() -> isize { sys_fork() }
+
+pub fn exec(path: &str) -> isize { sys_exec(path) }
 
 pub fn fstat(fd: i32, st: *mut Stat) -> i32 {
     unimplemented!()
