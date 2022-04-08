@@ -142,6 +142,17 @@ impl MemorySet {
         self.page_table.token()
     }
 
+    pub fn insert_framed_area(&mut self, sva: VirtAddr, eva: VirtAddr, perm: MapPermission) {
+        self.push(
+            MapArea::new(sva, eva, MapType::Framed, perm),
+            None
+        );
+    }
+
+    pub fn remove_area(&mut self, svpn: VirtPageNr) {
+        unimplemented!()
+    }
+
     pub fn from_existed_user(uspace: &MemorySet) -> MemorySet {
         let mut memset = Self::new_bare();
 
@@ -216,6 +227,10 @@ impl MemorySet {
         )
     }
 
+    pub fn translate(&self, vpn: VirtPageNr) -> Option<PageTableEntry> {
+        self.page_table.translate(vpn)
+    }
+
     fn push(&mut self, mut map_area: MapArea, data: Option<&[u8]>) {
         map_area.map(&mut self.page_table);
         if data.is_some() {
@@ -230,10 +245,6 @@ impl MemorySet {
             PhysAddr::from(strampoline as usize).into(),
             PTEFlags::R | PTEFlags::X,
         );
-    }
-
-    fn translate(&self, vpn: VirtPageNr) -> Option<PageTableEntry> {
-        self.page_table.translate(vpn)
     }
 }
 

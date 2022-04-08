@@ -1,10 +1,15 @@
 use lazy_static::lazy_static;
+
 use alloc::vec::Vec;
 
-use crate::{config::{TRAMPOLINE, KSTACK_SZ, PAGE_SZ}, sync::UPSafeCell, mm::memset::KERNEL_SPACE};
+use crate::{config::{TRAMPOLINE, KSTACK_SZ, PAGE_SZ}, sync::up::UPSafeCell};
+use crate::mm::{memset::KSPACE, map::MapPermission, addr::VirtAddr};
 
+// wrap pid in an struct so we can automatically recycle it
+#[derive(Clone)]
 pub struct PidHandle(pub usize);
 
+#[derive(Clone)]
 pub struct KStack {
     pid: usize,
 }
@@ -22,13 +27,38 @@ impl Drop for PidHandle {
 
 impl KStack {
     pub fn new(pid_handle: &PidHandle) -> Self {
-        unimplemented!()
+        let pid = pid_handle.0;
+        let (kbp, ksp) = kstack_pos(pid);
+        KSPACE
+            .exclusive_access()
+            .insert_framed_area(
+                kbp.into(),
+                ksp.into(),
+                MapPermission::R | MapPermission::W,
+            );
+        Self { pid: pid_handle.0 }
+    }
+    
+    pub fn push<T>(&self, val: T) -> *mut T where T: Sized {
+        let ksp = self.top();
+        let ptr_mut = (ksp - core::mem::size_of::<T>()) as *mut T;
+        unsafe { *ptr_mut = val; }
+        ptr_mut
+    }
+
+    pub fn top(&self) -> usize {
+        let (_, ksp) = kstack_pos(self.pid);
+        ksp
     }
 }
 
 impl Drop for KStack {
     fn drop(&mut self) {
-        unimplemented!()
+        let (kbp, _) = kstack_pos(self.pid);
+        let kbp_va: VirtAddr = kbp.into();
+        KSPACE
+            .exclusive_access()
+            .remove_area(kbp_va.into());
     }
 }
 
@@ -61,7 +91,9 @@ impl PidAllocator {
 
 lazy_static! {
     static ref PID_ALLOCATOR: UPSafeCell<PidAllocator> = unsafe {
-        UPSafeCell::new(PidAllocator::new())
+        UPSafeCell::new(
+            PidAllocator::new()
+        )
     };
 }
 

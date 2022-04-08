@@ -1,13 +1,17 @@
 pub mod context;
 
-use log::{ error, trace };
-use riscv::register::{ stvec, scause, stval, sie };
-use riscv::register::scause::{ Trap, Exception, Interrupt };
+use log::{error, trace};
+use riscv::register::{stvec, scause, stval, sie};
+use riscv::register::scause::{Trap, Exception, Interrupt};
 use riscv::register::mtvec::TrapMode;
-use context::TrapContext;
-use crate::syscall::syscall;
-use crate::timer::set_next_trigger;
+
 use core::arch::global_asm;
+
+use crate::syscall::syscall;
+use crate::task::suspend_current_and_run_next;
+use crate::timer::set_next_trigger;
+
+use context::TrapContext;
 
 pub fn init() {
     extern "C" { fn __alltraps(); }
@@ -29,6 +33,7 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
     match scause.cause() {
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
             set_next_trigger();
+            suspend_current_and_run_next();
         },
         Trap::Exception(Exception::UserEnvCall) => {
             cx.sepc += 4;

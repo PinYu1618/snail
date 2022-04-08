@@ -1,9 +1,17 @@
+use crate::task::suspend_current_and_run_next;
+
 pub fn sys_exit(xstate: i32) -> ! {
     unimplemented!()
 }
 
+/// func:
+///     app yields its rights of using cpu, and switch to next task
+/// ret:
+///     always 0
+/// id: 124
 pub fn sys_yield() -> isize {
-    unimplemented!()
+    suspend_current_and_run_next();
+    0
 }
 
 /// func:

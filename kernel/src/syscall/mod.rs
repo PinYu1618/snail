@@ -24,6 +24,7 @@ pub fn syscall(id: usize, args: [usize; 3]) -> isize {
         NR_READ => sys_read(args[0], args[1] as *const u8, args[2]),
         NR_WRITE => sys_write(args[0], args[1] as *const u8, args[2]),
         NR_EXIT => sys_exit(args[0] as i32),
+        NR_YIELD => sys_yield(),
         NR_FORK => sys_fork(),
         _ => panic!("[kernel] Unsupported syscall_id: {}", id),
     }
