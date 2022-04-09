@@ -3,7 +3,7 @@ use spin::{Mutex, MutexGuard};
 use alloc::{sync::Arc, vec::Vec, string::String};
 
 use super::SnailFileSystem;
-use super::BlockDevice;
+use super::BlockDev;
 use super::cache_block;
 use super::DiskInode;
 use super::DIRENT_SZ;
@@ -14,7 +14,7 @@ pub struct Inode {
     block_id: usize,
     block_offset: usize,
     fs: Arc<Mutex<SnailFileSystem>>,
-    block_dev: Arc<dyn BlockDevice>,
+    block_dev: Arc<dyn BlockDev>,
 }
 
 impl Inode {
@@ -23,7 +23,7 @@ impl Inode {
         block_id: u32,
         block_offset: usize,
         fs: Arc<Mutex<SnailFileSystem>>,
-        block_dev: Arc<dyn BlockDevice>,
+        block_dev: Arc<dyn BlockDev>,
     ) -> Self {
         Self {
             block_id: block_id as usize,

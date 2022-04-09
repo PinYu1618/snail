@@ -4,7 +4,7 @@ use alloc::sync::Arc;
 
 use snail_fs::Inode;
 
-use crate::mm::page::UserBuffer;
+use crate::mm::page::UserBuf;
 
 use super::File;
 
@@ -33,11 +33,11 @@ impl KInode {
 }
 
 impl File for KInode {
-    fn read(&self, mut buf: UserBuffer) -> usize {
+    fn read(&self, mut buf: UserBuf) -> usize {
         unimplemented!()
     }
 
-    fn write(&self, buf: UserBuffer) -> usize {
+    fn write(&self, buf: UserBuf) -> usize {
         unimplemented!()
     }
 

@@ -30,7 +30,7 @@ pub struct PageTableEntry {
     pub bits: usize,
 }
 
-pub struct UserBuffer {
+pub struct UserBuf {
     pub buffers: Vec<&'static mut [u8]>,
 }
 
@@ -149,7 +149,7 @@ impl PageTableEntry {
     }
 }
 
-impl UserBuffer {
+impl UserBuf {
     pub fn new(buffers: Vec<&'static mut [u8]>) -> Self {
         Self { buffers }
     }

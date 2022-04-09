@@ -1,6 +1,6 @@
 use alloc::sync::Arc;
 
-use super::{BLOCK_SZ, BlockDevice, cache_block};
+use super::{BLOCK_SZ, BlockDev, cache_block};
 
 const BLOCK_BITS: usize = BLOCK_SZ * 8;
 
@@ -19,7 +19,7 @@ impl Bitmap {
         }
     }
 
-    pub fn alloc(&self, block_dev: &Arc<dyn BlockDevice>) -> Option<usize> {
+    pub fn alloc(&self, block_dev: &Arc<dyn BlockDev>) -> Option<usize> {
         for block_id in 0..self.blocks {
             let pos = cache_block(
                 block_id + self.start_block_id as usize,
@@ -48,7 +48,7 @@ impl Bitmap {
         None
     }
 
-    pub fn dealloc(&self, block_dev: &Arc<dyn BlockDevice>, bit: usize) {
+    pub fn dealloc(&self, block_dev: &Arc<dyn BlockDev>, bit: usize) {
         let (block_pos, bits64_pos, inner_pos) = decomposition(bit);
         cache_block(
             block_pos + self.start_block_id,

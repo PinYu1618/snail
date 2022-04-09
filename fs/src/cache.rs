@@ -5,20 +5,20 @@ use alloc::sync::Arc;
 use alloc::collections::VecDeque;
 
 use super::BLOCK_SZ;
-use super::BlockDevice;
+use super::BlockDev;
 
 const BLOCK_CACHE_LIMIT: usize = 16;
 
 pub struct BlockCache {
     content: [u8; BLOCK_SZ],
     block_id: usize,
-    block_dev: Arc<dyn BlockDevice>,
+    block_dev: Arc<dyn BlockDev>,
     modified: bool,
 }
 
 impl BlockCache {
     // Load a new BlockCache from disk.
-    pub fn new(id: usize, dev: Arc<dyn BlockDevice>) -> Self {
+    pub fn new(id: usize, dev: Arc<dyn BlockDev>) -> Self {
         let mut cache = [0_u8; BLOCK_SZ];
         dev.read_block(id, &mut cache);
         Self {
@@ -79,7 +79,7 @@ impl BlockCacher {
         Self { queue: VecDeque::new() }
     }
 
-    fn cache_block(&mut self, id: usize, dev: Arc<dyn BlockDevice>) -> Arc<Mutex<BlockCache>> {
+    fn cache_block(&mut self, id: usize, dev: Arc<dyn BlockDev>) -> Arc<Mutex<BlockCache>> {
         if let Some(pair) = self.queue.iter()
         .find(|pair| pair.0 == id) {
             Arc::clone(&pair.1)
@@ -110,6 +110,6 @@ lazy_static! {
     );
 }
 
-pub fn cache_block(id: usize, dev: Arc<dyn BlockDevice>) -> Arc<Mutex<BlockCache>> {
+pub fn cache_block(id: usize, dev: Arc<dyn BlockDev>) -> Arc<Mutex<BlockCache>> {
     BLOCK_CACHER.lock().cache_block(id, dev)
 }

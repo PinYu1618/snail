@@ -11,7 +11,7 @@ mod sfs;
 mod vfs;
 
 pub const BLOCK_SZ: usize = 512;
-pub use block_dev::BlockDevice;
+pub use block_dev::BlockDev;
 pub use sfs::SnailFileSystem;
 pub use vfs::Inode;
 

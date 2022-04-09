@@ -3,12 +3,12 @@ use spin::Mutex;
 use alloc::sync::Arc;
 
 use super::{
-    BLOCK_SZ, BlockDevice, SuperBlock, Bitmap, DiskInode,
+    BLOCK_SZ, BlockDev, SuperBlock, Bitmap, DiskInode,
     DiskInodeType, DataBlock, cache_block, Inode,
 };
 
 pub struct SnailFileSystem {
-    pub block_dev: Arc<dyn BlockDevice>,
+    pub block_dev: Arc<dyn BlockDev>,
     /// inode bitmap
     pub imap: Bitmap,
     /// data bitmap
@@ -22,7 +22,7 @@ pub struct SnailFileSystem {
 impl SnailFileSystem {
     /// create and initialize a fs on the block device
     pub fn create(
-        block_dev: Arc<dyn BlockDevice>,
+        block_dev: Arc<dyn BlockDev>,
         total_blocks: u32,
         imap_blocks: u32,
     ) -> Arc<Mutex<Self>> {
@@ -84,7 +84,7 @@ impl SnailFileSystem {
     }
 
     /// open the snail fs on block devices that already has fs image
-    pub fn open(block_dev: Arc<dyn BlockDevice>) -> Arc<Mutex<Self>> {
+    pub fn open(block_dev: Arc<dyn BlockDev>) -> Arc<Mutex<Self>> {
         // read SuperBlock
         cache_block(0, Arc::clone(&block_dev))
             .lock()

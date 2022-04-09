@@ -140,7 +140,7 @@ impl DiskInode {
         self.type_ == DiskInodeType::File
     }
 
-    pub fn get_block_id(&self, inner_id: u32, dev: &Arc<dyn BlockDevice>) -> u32 {
+    pub fn get_block_id(&self, inner_id: u32, dev: &Arc<dyn BlockDev>) -> u32 {
         let inner_id = inner_id as usize;
         if inner_id < INODE_DIRECT_COUNT {
             self.direct[inner_id]
@@ -175,7 +175,7 @@ impl DiskInode {
         &self,
         offset: usize,
         buf: &mut [u8],
-        block_dev: &Arc<dyn BlockDevice>,
+        block_dev: &Arc<dyn BlockDev>,
     ) -> usize {
         let mut start = offset;
         let end = (offset + buf.len()).min(self.size as usize);
@@ -213,7 +213,7 @@ impl DiskInode {
         &mut self,
         offset: usize,
         buf: &[u8],
-        block_device: &Arc<dyn BlockDevice>,
+        block_device: &Arc<dyn BlockDev>,
     ) -> usize {
         let mut start = offset;
         let end = (offset + buf.len()).min(self.size as usize);
@@ -251,7 +251,7 @@ impl DiskInode {
         &mut self,
         new_size: u32,
         new_blocks: Vec<u32>,
-        block_dev: &Arc<dyn BlockDevice>,
+        block_dev: &Arc<dyn BlockDev>,
     ) {
         let mut current_blocks = self.data_blocks();
         self.size = new_size;
@@ -320,7 +320,7 @@ impl DiskInode {
         });
     }
 
-    pub fn clear_size(&mut self, block_dev: &Arc<dyn BlockDevice>) -> Vec<u32> {
+    pub fn clear_size(&mut self, block_dev: &Arc<dyn BlockDev>) -> Vec<u32> {
         let mut v: Vec<u32> = Vec::new();
         let mut data_blocks = self.data_blocks() as usize;
         self.size = 0;
