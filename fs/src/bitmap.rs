@@ -1,5 +1,6 @@
-use super::{ BLOCK_SZ, BlockDevice, cache_block };
 use alloc::sync::Arc;
+
+use super::{BLOCK_SZ, BlockDevice, cache_block};
 
 const BLOCK_BITS: usize = BLOCK_SZ * 8;
 
@@ -18,11 +19,11 @@ impl Bitmap {
         }
     }
 
-    pub fn alloc(&self, block_device: &Arc<dyn BlockDevice>) -> Option<usize> {
+    pub fn alloc(&self, block_dev: &Arc<dyn BlockDevice>) -> Option<usize> {
         for block_id in 0..self.blocks {
             let pos = cache_block(
                 block_id + self.start_block_id as usize,
-                Arc::clone(block_device),
+                Arc::clone(block_dev),
             )
             .lock()
             .modify(0, |bitmap_block: &mut BitmapBlock| {
@@ -58,7 +59,7 @@ impl Bitmap {
         });
     }
 
-    pub fn maximum(&self) -> usize {
+    pub fn max(&self) -> usize {
         self.blocks * BLOCK_BITS
     }
 }
