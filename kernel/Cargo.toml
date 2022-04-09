@@ -1,10 +1,18 @@
 [package]
-name = "snail"
+name = "snail-kernel"
 version = "0.1.0"
 edition = "2021"
 authors = ["Pin-Yu Chen <pycc1618@gmail.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "snail_kernel"
+test = false
+
+[[bin]]
+name = "snail-kernel"
+test = false
 
 [profile.dev]
 panic = "abort"
@@ -20,5 +28,6 @@ buddy_system_allocator = "0.6"
 bitflags = "1.2.1"
 log = "0.4"
 xmas-elf = "0.8.0"
+virtio-drivers = { git = "https://github.com/rcore-os/virtio-drivers" }
 snail-fs = { path = "../fs" }
 snail-user = { path = "../user" }

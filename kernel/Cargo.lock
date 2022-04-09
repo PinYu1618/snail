@@ -135,7 +135,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
-name = "snail"
+name = "snail-fs"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "spin 0.5.2",
+]
+
+[[package]]
+name = "snail-kernel"
 version = "0.1.0"
 dependencies = [
  "bitflags",
@@ -146,21 +154,15 @@ dependencies = [
  "snail-fs",
  "snail-user",
  "spin 0.5.2",
+ "virtio-drivers",
  "xmas-elf",
-]
-
-[[package]]
-name = "snail-fs"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "spin 0.5.2",
 ]
 
 [[package]]
 name = "snail-user"
 version = "0.1.0"
 dependencies = [
+ "bitflags",
  "riscv",
 ]
 
@@ -175,6 +177,22 @@ name = "spin"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13287b4da9d1207a4f4929ac390916d64eacfe236a487e9a9f5b3be392be5162"
+
+[[package]]
+name = "virtio-drivers"
+version = "0.1.0"
+source = "git+https://github.com/rcore-os/virtio-drivers#f30d4268b7a58b2a7f5a4ce87d275e7bd2484acf"
+dependencies = [
+ "bitflags",
+ "log",
+ "volatile",
+]
+
+[[package]]
+name = "volatile"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8e76fae08f03f96e166d2dfda232190638c10e0383841252416f9cfe2ae60e6"
 
 [[package]]
 name = "xmas-elf"
