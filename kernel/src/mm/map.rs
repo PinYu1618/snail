@@ -2,8 +2,11 @@ use alloc::collections::BTreeMap;
 
 use crate::{config::PAGE_SZ, mm::addr::Step};
 
-use super::addr::{VPNRange, VirtAddr, VirtPageNr, PhysPageNr};
-use super::{frame::{FrameTracker, alloc_frame}, page::{PageTable, PTEFlags}};
+use super::addr::{PhysPageNr, VPNRange, VirtAddr, VirtPageNr};
+use super::{
+    frame::{alloc_frame, FrameTracker},
+    page::{PTEFlags, PageTable},
+};
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum MapType {
@@ -33,11 +36,11 @@ impl MapArea {
         let svpn: VirtPageNr = sva.floor();
         let evpn: VirtPageNr = eva.ceil();
         Self {
-           vpn_range: VPNRange::new(svpn, evpn),
-           data_frames: BTreeMap::new(),
-           map_type,
-           map_perm,
-       } 
+            vpn_range: VPNRange::new(svpn, evpn),
+            data_frames: BTreeMap::new(),
+            map_type,
+            map_perm,
+        }
     }
 
     // data: start-aligned but maybe with shorter length
@@ -49,11 +52,7 @@ impl MapArea {
         let len = data.len();
         loop {
             let src = &data[start..len.min(start + PAGE_SZ)];
-            let dst = &mut pt
-                .translate(current_vpn)
-                .unwrap()
-                .ppn()
-                .bytes_arr()[..src.len()];
+            let dst = &mut pt.translate(current_vpn).unwrap().ppn().bytes_arr()[..src.len()];
             dst.copy_from_slice(src);
             start += PAGE_SZ;
             if start >= len {
@@ -74,7 +73,7 @@ impl MapArea {
         match self.map_type {
             MapType::Identical => {
                 ppn = PhysPageNr::from(vpn.as_usize());
-            },
+            }
             MapType::Framed => {
                 let frame = alloc_frame().unwrap();
                 ppn = frame.ppn();
@@ -87,10 +86,7 @@ impl MapArea {
 
     pub fn from_another(another: &MapArea) -> Self {
         Self {
-            vpn_range: VPNRange::new(
-                another.vpn_range.start(),
-                another.vpn_range.end(),
-            ),
+            vpn_range: VPNRange::new(another.vpn_range.start(), another.vpn_range.end()),
             data_frames: BTreeMap::new(),
             map_type: another.map_type,
             map_perm: another.map_perm,

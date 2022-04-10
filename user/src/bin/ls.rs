@@ -3,7 +3,6 @@
 
 extern crate snail_user;
 
-
 #[no_mangle]
 fn main() -> i32 {
     0

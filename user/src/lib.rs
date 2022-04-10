@@ -10,12 +10,12 @@ extern crate alloc;
 
 #[macro_use]
 pub mod console;
-mod syscall;
 mod lang;
+mod syscall;
 
 use alloc::vec::Vec;
-use syscall::*;
 use buddy_system_allocator::LockedHeap;
+use syscall::*;
 
 const UHEAP_SZ: usize = 32768;
 
@@ -39,24 +39,38 @@ bitflags! {
     }
 }
 
-pub fn open(path: &str, flags: OpenFlags) -> isize { sys_open(path, flags.bits) }
+pub fn open(path: &str, flags: OpenFlags) -> isize {
+    sys_open(path, flags.bits)
+}
 
-pub fn close(fd: usize) -> isize { sys_close(fd) }
+pub fn close(fd: usize) -> isize {
+    sys_close(fd)
+}
 
-pub fn read(fd: usize, buf: &mut [u8]) -> isize { sys_read(fd, buf) }
+pub fn read(fd: usize, buf: &mut [u8]) -> isize {
+    sys_read(fd, buf)
+}
 
-pub fn write(fd: usize, buf: &[u8]) -> isize { sys_write(fd, buf) }
+pub fn write(fd: usize, buf: &[u8]) -> isize {
+    sys_write(fd, buf)
+}
 
-pub fn exit(exit_code: i32) -> ! { sys_exit(exit_code); }
+pub fn exit(exit_code: i32) -> ! {
+    sys_exit(exit_code);
+}
 
-pub fn yield_() -> isize { sys_yield() }
+pub fn yield_() -> isize {
+    sys_yield()
+}
 
 pub fn wait(exit_code: &mut i32) -> isize {
     loop {
         match sys_waitpid(-1, exit_code as *mut _) {
-            -2 => { yield_(); }
+            -2 => {
+                yield_();
+            }
             // -1 or a real pid
-            exit_pid => return exit_pid
+            exit_pid => return exit_pid,
         }
     }
 }
@@ -64,16 +78,22 @@ pub fn wait(exit_code: &mut i32) -> isize {
 pub fn waitpid(pid: usize, exit_code: &mut i32) -> isize {
     loop {
         match sys_waitpid(pid as isize, exit_code as *mut _) {
-            -2 => { yield_(); }
+            -2 => {
+                yield_();
+            }
             // -1 or a real pid
-            exit_pid => return exit_pid
+            exit_pid => return exit_pid,
         }
     }
 }
 
-pub fn fork() -> isize { sys_fork() }
+pub fn fork() -> isize {
+    sys_fork()
+}
 
-pub fn exec(path: &str) -> isize { sys_exec(path) }
+pub fn exec(path: &str) -> isize {
+    sys_exec(path)
+}
 
 pub fn fstat(fd: i32, st: *mut Stat) -> i32 {
     unimplemented!()
@@ -84,7 +104,11 @@ pub fn unlinkat(dirfd: i32, path: *const u8, flags: u32) -> i32 {
 }
 
 pub fn linkat(
-    olddirfd: i32, oldpath: *const u8, newdirfd: i32, newpath: *const u8, flags: u32
+    olddirfd: i32,
+    oldpath: *const u8,
+    newdirfd: i32,
+    newpath: *const u8,
+    flags: u32,
 ) -> i32 {
     unimplemented!()
 }
@@ -96,8 +120,7 @@ pub struct Stat;
 #[link_section = ".text.entry"]
 pub extern "C" fn _start(argc: usize, argv: usize) -> ! {
     unsafe {
-        HEAP.lock()
-            .init(HEAP_SPACE.as_ptr() as usize, UHEAP_SZ);
+        HEAP.lock().init(HEAP_SPACE.as_ptr() as usize, UHEAP_SZ);
     }
     let mut v: Vec<&'static str> = Vec::new();
     for i in 0..argc {

@@ -1,6 +1,6 @@
-use log::{ Record, Metadata, Level, LevelFilter, SetLoggerError };
+use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 
-use core::fmt::{ self, Write };
+use core::fmt::{self, Write};
 
 use crate::sbi::console_putchar;
 
@@ -37,8 +37,7 @@ struct SnailLogger;
 static LOGGER: SnailLogger = SnailLogger;
 
 pub fn init() -> Result<(), SetLoggerError> {
-    log::set_logger(&LOGGER)
-        .map(|()| log::set_max_level(LevelFilter::Trace))
+    log::set_logger(&LOGGER).map(|()| log::set_max_level(LevelFilter::Trace))
 }
 
 impl log::Log for SnailLogger {
@@ -61,8 +60,7 @@ macro_rules! with_color {
     }};
 }
 
-fn color_println(args: fmt::Arguments, color_code: u8) {    
-}
+fn color_println(args: fmt::Arguments, color_code: u8) {}
 
 fn level_to_color_code(level: Level) -> u8 {
     match level {

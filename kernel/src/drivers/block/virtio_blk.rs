@@ -1,10 +1,15 @@
 use alloc::vec::Vec;
+use lazy_static::lazy_static;
 use snail_fs::BlockDev;
 use spin::Mutex;
 use virtio_drivers::{VirtIOBlk, VirtIOHeader};
-use lazy_static::lazy_static;
 
-use crate::mm::{frame::{FrameTracker, alloc_frame, dealloc_frame}, addr::{PhysAddr, PhysPageNr, Step, VirtAddr}, page::PageTable, memset::ktoken};
+use crate::mm::{
+    addr::{PhysAddr, PhysPageNr, Step, VirtAddr},
+    frame::{alloc_frame, dealloc_frame, FrameTracker},
+    memset::ktoken,
+    page::PageTable,
+};
 
 const VIRTIO0: usize = 0x10001000;
 
@@ -12,23 +17,25 @@ pub struct VirtIOBlock(Mutex<VirtIOBlk<'static>>);
 
 impl VirtIOBlock {
     pub fn new() -> Self {
-        Self(
-            Mutex::new(
-                VirtIOBlk::new(
-                    unsafe { &mut *(VIRTIO0 as *mut VirtIOHeader) }
-                ).unwrap()
-            )
-        )
+        Self(Mutex::new(
+            VirtIOBlk::new(unsafe { &mut *(VIRTIO0 as *mut VirtIOHeader) }).unwrap(),
+        ))
     }
 }
 
 impl BlockDev for VirtIOBlock {
-    fn read_block(&self, block_id: usize, buf: &mut[u8]) {
-        self.0.lock().read_block(block_id, buf).expect("Error when reading VirtIOBlk");
+    fn read_block(&self, block_id: usize, buf: &mut [u8]) {
+        self.0
+            .lock()
+            .read_block(block_id, buf)
+            .expect("Error when reading VirtIOBlk");
     }
 
     fn write_block(&self, block_id: usize, buf: &[u8]) {
-        self.0.lock().write_block(block_id, buf).expect("Error when writing VirtIOBlk");
+        self.0
+            .lock()
+            .write_block(block_id, buf)
+            .expect("Error when writing VirtIOBlk");
     }
 }
 
@@ -67,7 +74,5 @@ pub extern "C" fn virtio_phys_to_virt(paddr: PhysAddr) -> VirtAddr {
 
 #[no_mangle]
 pub extern "C" fn virtio_virt_to_phys(vaddr: VirtAddr) -> PhysAddr {
-    PageTable::from_token(ktoken())
-        .translate_va(vaddr)
-        .unwrap()
+    PageTable::from_token(ktoken()).translate_va(vaddr).unwrap()
 }

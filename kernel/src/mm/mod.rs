@@ -1,9 +1,9 @@
-pub mod heap;
 pub mod addr;
 pub mod frame;
-pub mod page;
+pub mod heap;
 pub mod map;
 pub mod memset;
+pub mod page;
 
 use log::info;
 use memset::KSPACE;

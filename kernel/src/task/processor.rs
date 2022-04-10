@@ -4,7 +4,7 @@ use alloc::sync::Arc;
 
 use crate::sync::up::UPSafeCell;
 
-use super::{process::ProcessCtrlBlock, context::ProcessContext, ctrl::fetch_task};
+use super::{context::ProcessContext, ctrl::fetch_task, process::ProcessCtrlBlock};
 
 pub struct Processor {
     current: Option<Arc<ProcessCtrlBlock>>,
@@ -33,9 +33,7 @@ impl Processor {
 }
 
 lazy_static! {
-    pub static ref PROCESSOR: UPSafeCell<Processor> = unsafe {
-        UPSafeCell::new(Processor::new())
-    };
+    pub static ref PROCESSOR: UPSafeCell<Processor> = unsafe { UPSafeCell::new(Processor::new()) };
 }
 
 pub fn take_current_process() -> Option<Arc<ProcessCtrlBlock>> {

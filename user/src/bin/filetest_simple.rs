@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use snail_user::{open, write, read, OpenFlags, close};
+use snail_user::{close, open, read, write, OpenFlags};
 
 #[macro_use]
 extern crate snail_user;
@@ -21,10 +21,7 @@ fn main() -> i32 {
     let read_len = read(fd as usize, &mut buf) as usize;
     close(fd as usize);
 
-    assert_eq!(
-        test_str,
-        core::str::from_utf8(&buf[..read_len]).unwrap()
-    );
+    assert_eq!(test_str, core::str::from_utf8(&buf[..read_len]).unwrap());
 
     println!("file test (simple) ok.");
     0

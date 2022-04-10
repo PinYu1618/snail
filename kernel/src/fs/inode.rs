@@ -1,11 +1,11 @@
-use spin::Mutex;
 use lazy_static::lazy_static;
+use spin::Mutex;
 
 use alloc::sync::Arc;
 
 use snail_fs::{Inode, SnailFileSystem};
 
-use crate::{mm::page::UserBuf, drivers::block::BLOCK_DEV};
+use crate::{drivers::block::BLOCK_DEV, mm::page::UserBuf};
 
 use super::File;
 
@@ -37,10 +37,7 @@ impl KInode {
         Self {
             readable,
             writable,
-            inner: Mutex::new(KInodeInner {
-                offset: 0,
-                inode,
-            }),
+            inner: Mutex::new(KInodeInner { offset: 0, inode }),
         }
     }
 }
@@ -65,16 +62,20 @@ impl File for KInode {
         let mut total_write_size = 0_usize;
         for slice in buf.buffers.iter() {
             let write_size = inner.inode.write_at(inner.offset, *slice);
-            assert_eq!(write_size, slice.len());    // why check this ?
+            assert_eq!(write_size, slice.len()); // why check this ?
             inner.offset += write_size;
             total_write_size += write_size;
         }
         total_write_size
     }
 
-    fn readable(&self) -> bool { self.readable }
+    fn readable(&self) -> bool {
+        self.readable
+    }
 
-    fn writable(&self) -> bool { self.writable }
+    fn writable(&self) -> bool {
+        self.writable
+    }
 }
 
 impl OpenFlags {

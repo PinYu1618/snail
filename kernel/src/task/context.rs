@@ -1,9 +1,9 @@
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct ProcessContext {
-    ra: usize,        // return address
-    sp: usize,        // kernel stack top
-    s: [usize; 12],   // s0~s11
+    ra: usize,      // return address
+    sp: usize,      // kernel stack top
+    s: [usize; 12], // s0~s11
 }
 
 impl ProcessContext {

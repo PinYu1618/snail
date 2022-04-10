@@ -1,6 +1,6 @@
 use alloc::sync::Arc;
 
-use super::{BLOCK_SZ, BlockDev, cache_block};
+use super::{cache_block, BlockDev, BLOCK_SZ};
 
 const BLOCK_BITS: usize = BLOCK_SZ * 8;
 
@@ -28,12 +28,11 @@ impl Bitmap {
             .lock()
             .modify(0, |bitmap_block: &mut BitmapBlock| {
                 if let Some((bits64_pos, inner_pos)) = bitmap_block
-                .iter()
-                .enumerate()
-                .find(|(_, bits64)| **bits64 != u64::MAX)
-                .map(|(bits64_pos, bits64)| {
-                    (bits64_pos, bits64.trailing_ones() as usize)
-                }) {
+                    .iter()
+                    .enumerate()
+                    .find(|(_, bits64)| **bits64 != u64::MAX)
+                    .map(|(bits64_pos, bits64)| (bits64_pos, bits64.trailing_ones() as usize))
+                {
                     // modify cache
                     bitmap_block[bits64_pos] |= 1u64 << inner_pos;
                     Some(block_id * BLOCK_BITS + bits64_pos * 64 + inner_pos as usize)
@@ -50,13 +49,12 @@ impl Bitmap {
 
     pub fn dealloc(&self, block_dev: &Arc<dyn BlockDev>, bit: usize) {
         let (block_pos, bits64_pos, inner_pos) = decomposition(bit);
-        cache_block(
-            block_pos + self.start_block_id,
-            Arc::clone(block_dev)
-        ).lock().modify(0, |bitmap_block: &mut BitmapBlock| {
-            assert!(bitmap_block[bits64_pos] & (1u64 << inner_pos) > 0);
-            bitmap_block[bits64_pos] -= 1u64 << inner_pos;
-        });
+        cache_block(block_pos + self.start_block_id, Arc::clone(block_dev))
+            .lock()
+            .modify(0, |bitmap_block: &mut BitmapBlock| {
+                assert!(bitmap_block[bits64_pos] & (1u64 << inner_pos) > 0);
+                bitmap_block[bits64_pos] -= 1u64 << inner_pos;
+            });
     }
 
     pub fn max(&self) -> usize {

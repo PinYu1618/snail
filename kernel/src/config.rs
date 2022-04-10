@@ -15,7 +15,7 @@ pub const TRAP_CONTEXT_BASE: usize = TRAMPOLINE - PAGE_SZ;
 pub const CLOCK_FREQ: usize = 12500000;
 
 pub const MMIO: &[(usize, usize)] = &[
-//    (0x1000_0000, 0x1000),
+    //    (0x1000_0000, 0x1000),
     (0x1000_1000, 0x1000),
-//    (0xC00_0000, 0x40_0000),
+    //    (0xC00_0000, 0x40_0000),
 ];

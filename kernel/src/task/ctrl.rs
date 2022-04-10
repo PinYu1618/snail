@@ -13,7 +13,9 @@ pub struct TaskCtrller {
 // a simple FIFO scheduler
 impl TaskCtrller {
     pub fn new() -> Self {
-        Self { ready_queue: VecDeque::new() }
+        Self {
+            ready_queue: VecDeque::new(),
+        }
     }
 
     pub fn add(&mut self, task: Arc<ProcessCtrlBlock>) {
@@ -26,9 +28,8 @@ impl TaskCtrller {
 }
 
 lazy_static! {
-    pub static ref TASK_CTRLLER: UPSafeCell<TaskCtrller> = unsafe {
-        UPSafeCell::new(TaskCtrller::new())
-    };
+    pub static ref TASK_CTRLLER: UPSafeCell<TaskCtrller> =
+        unsafe { UPSafeCell::new(TaskCtrller::new()) };
 }
 
 pub fn add_task(task: Arc<ProcessCtrlBlock>) {

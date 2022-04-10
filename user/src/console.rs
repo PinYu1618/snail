@@ -1,7 +1,7 @@
 use crate::read;
 
 use super::write;
-use core::fmt::{ self, Write };
+use core::fmt::{self, Write};
 
 const STDIN: usize = 0;
 const STDOUT: usize = 1;

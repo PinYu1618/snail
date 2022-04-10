@@ -11,16 +11,16 @@ extern crate alloc;
 
 #[macro_use]
 pub mod logging;
-pub mod sbi;
 pub mod config;
-pub mod trap;
-pub mod timer;
 pub mod drivers;
-pub mod syscall;
-pub mod sync;
-pub mod task;
-pub mod mm;
 pub mod fs;
+pub mod mm;
+pub mod sbi;
+pub mod sync;
+pub mod syscall;
+pub mod task;
+pub mod timer;
+pub mod trap;
 //pub mod shell;
 mod lang;
 

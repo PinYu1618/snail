@@ -2,7 +2,10 @@ pub const FD_STDOUT: usize = 1;
 
 //pub fn sys_linkat()
 
-use crate::{task::processor::{current_process, current_user_token}, mm::page::translated_str};
+use crate::{
+    mm::page::translated_str,
+    task::processor::{current_process, current_user_token},
+};
 
 pub fn sys_close(fd: usize) -> isize {
     unimplemented!()
@@ -19,7 +22,7 @@ pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
             let string = core::str::from_utf8(slice).unwrap();
             print!("{}", string);
             len as isize
-        },
+        }
         _ => {
             panic!("Unsupported fd in sys_write!");
         }

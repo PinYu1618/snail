@@ -1,12 +1,12 @@
-use riscv::register::sstatus::{ self, Sstatus, SPP };
+use riscv::register::sstatus::{self, Sstatus, SPP};
 
 #[repr(C)]
 pub struct TrapContext {
-    pub x: [usize; 32],        // registers x0 ~ x31
+    pub x: [usize; 32], // registers x0 ~ x31
     pub sstatus: Sstatus,
-    pub sepc: usize,           // program counter after trap ended
+    pub sepc: usize, // program counter after trap ended
     pub kernel_satp: usize,
-    pub ksp: usize,            // kernel stack top
+    pub ksp: usize, // kernel stack top
     pub trap_handler: usize,
 }
 

@@ -1,14 +1,14 @@
 use core::fmt::Debug;
 
-use crate::config::PAGE_SZ_BITS;
 use crate::config::PAGE_SZ;
+use crate::config::PAGE_SZ_BITS;
 
 use super::page::PageTableEntry;
 
 const PA_WIDTH_SV39: usize = 56;
-const PPN_WIDTH_SV39: usize = PA_WIDTH_SV39 - PAGE_SZ_BITS;    // 56 - 12
+const PPN_WIDTH_SV39: usize = PA_WIDTH_SV39 - PAGE_SZ_BITS; // 56 - 12
 const VA_WIDTH_SV39: usize = 39;
-const VPN_WIDTH_SV39: usize = VA_WIDTH_SV39 - PAGE_SZ_BITS;    // 39 - 12
+const VPN_WIDTH_SV39: usize = VA_WIDTH_SV39 - PAGE_SZ_BITS; // 39 - 12
 
 #[repr(C)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
@@ -29,7 +29,7 @@ pub struct VirtPageNr(usize);
 #[derive(Copy, Clone, Debug)]
 pub struct Range<T>
 where
-    T: Step + Copy + PartialEq + PartialOrd + Debug
+    T: Step + Copy + PartialEq + PartialOrd + Debug,
 {
     l: T,
     r: T,
@@ -37,7 +37,7 @@ where
 
 pub struct RangeIterator<T>
 where
-    T: Step + Copy + PartialEq + PartialOrd + Debug
+    T: Step + Copy + PartialEq + PartialOrd + Debug,
 {
     current: T,
     end: T,
@@ -65,43 +65,35 @@ impl PhysAddr {
     pub fn get_ref<T>(&self) -> &'static T {
         unsafe { (self.0 as *const T).as_ref().unwrap() }
     }
-    
+
     pub fn get_mut<T>(&self) -> &'static mut T {
         unsafe { (self.0 as *mut T).as_mut().unwrap() }
     }
 
-    pub fn as_usize(&self) -> usize { self.0 }
+    pub fn as_usize(&self) -> usize {
+        self.0
+    }
 }
 
 impl PhysPageNr {
     pub fn bytes_arr(&self) -> &'static mut [u8] {
         let pa: PhysAddr = (*self).clone().into();
-        unsafe {
-            core::slice::from_raw_parts_mut(
-                pa.as_usize() as *mut u8,
-                PAGE_SZ,
-            )
-        }
+        unsafe { core::slice::from_raw_parts_mut(pa.as_usize() as *mut u8, PAGE_SZ) }
     }
 
     pub fn pte_arr(&self) -> &'static mut [PageTableEntry] {
         let pa: PhysAddr = (*self).clone().into();
-        unsafe {
-            core::slice::from_raw_parts_mut(
-                pa.as_usize() as *mut PageTableEntry,
-                512
-            )
-        }
+        unsafe { core::slice::from_raw_parts_mut(pa.as_usize() as *mut PageTableEntry, 512) }
     }
 
     pub fn get_mut<T>(&self) -> &'static mut T {
         let pa: PhysAddr = self.clone().into();
-        unsafe {
-            (pa.as_usize() as *mut T).as_mut().unwrap()
-        }
+        unsafe { (pa.as_usize() as *mut T).as_mut().unwrap() }
     }
 
-    pub fn as_usize(&self) -> usize { self.0 }
+    pub fn as_usize(&self) -> usize {
+        self.0
+    }
 }
 
 impl VirtAddr {
@@ -117,7 +109,9 @@ impl VirtAddr {
         VirtPageNr((self.as_usize() + PAGE_SZ - 1) / PAGE_SZ)
     }
 
-    pub fn as_usize(&self) -> usize { self.0 }
+    pub fn as_usize(&self) -> usize {
+        self.0
+    }
 }
 
 impl VirtPageNr {
@@ -131,44 +125,54 @@ impl VirtPageNr {
         idxs
     }
 
-    pub fn as_usize(&self) -> usize { self.0 }
+    pub fn as_usize(&self) -> usize {
+        self.0
+    }
 }
 
 // conversions from { pa, ppn, va, vpn } to usize
 
 impl From<PhysAddr> for usize {
-    fn from(pa: PhysAddr) -> Self { pa.0 }
+    fn from(pa: PhysAddr) -> Self {
+        pa.0
+    }
 }
 impl From<PhysPageNr> for usize {
-    fn from(ppn: PhysPageNr) -> Self { ppn.0 }
+    fn from(ppn: PhysPageNr) -> Self {
+        ppn.0
+    }
 }
 impl From<VirtAddr> for usize {
-    fn from(va: VirtAddr) -> Self { va.0 }
+    fn from(va: VirtAddr) -> Self {
+        va.0
+    }
 }
 impl From<VirtPageNr> for usize {
-    fn from(vpn: VirtPageNr) -> Self { vpn.0 }
+    fn from(vpn: VirtPageNr) -> Self {
+        vpn.0
+    }
 }
 
 // conversions from usize to { pa, ppn, va, vpn }
 
 impl From<usize> for PhysAddr {
     fn from(v: usize) -> Self {
-        Self(v & ( (1 << PA_WIDTH_SV39) - 1))
+        Self(v & ((1 << PA_WIDTH_SV39) - 1))
     }
 }
 impl From<usize> for PhysPageNr {
     fn from(v: usize) -> Self {
-        Self(v & ( (1 << PPN_WIDTH_SV39) - 1))
+        Self(v & ((1 << PPN_WIDTH_SV39) - 1))
     }
 }
 impl From<usize> for VirtAddr {
     fn from(v: usize) -> Self {
-        Self(v & ( (1 << VA_WIDTH_SV39) - 1))
+        Self(v & ((1 << VA_WIDTH_SV39) - 1))
     }
 }
 impl From<usize> for VirtPageNr {
     fn from(v: usize) -> Self {
-        Self(v & ( (1 << VPN_WIDTH_SV39) - 1))
+        Self(v & ((1 << VPN_WIDTH_SV39) - 1))
     }
 }
 
@@ -181,7 +185,9 @@ impl From<PhysAddr> for PhysPageNr {
     }
 }
 impl From<PhysPageNr> for PhysAddr {
-    fn from(v: PhysPageNr) -> Self { Self(v.0 << PAGE_SZ_BITS) }
+    fn from(v: PhysPageNr) -> Self {
+        Self(v.0 << PAGE_SZ_BITS)
+    }
 }
 
 // conversions between va and vpn
@@ -193,7 +199,9 @@ impl From<VirtAddr> for VirtPageNr {
     }
 }
 impl From<VirtPageNr> for VirtAddr {
-    fn from(v: VirtPageNr) -> Self { Self(v.0 << PAGE_SZ_BITS) }
+    fn from(v: VirtPageNr) -> Self {
+        Self(v.0 << PAGE_SZ_BITS)
+    }
 }
 
 // iterating
@@ -212,22 +220,23 @@ impl Step for PhysPageNr {
 
 impl<T> Range<T>
 where
-    T: Step + Copy + PartialEq + PartialOrd + Debug
+    T: Step + Copy + PartialEq + PartialOrd + Debug,
 {
     pub fn new(start: T, end: T) -> Self {
         assert!(start <= end, "start {:?} > end {:?}!", start, end);
-        Self {
-            l: start,
-            r: end
-        }
+        Self { l: start, r: end }
     }
-    pub fn start(&self) -> T { self.l }
-    pub fn end(&self) -> T { self.r }
+    pub fn start(&self) -> T {
+        self.l
+    }
+    pub fn end(&self) -> T {
+        self.r
+    }
 }
 
 impl<T> IntoIterator for Range<T>
 where
-    T: Step + Copy + PartialEq + PartialOrd + Debug
+    T: Step + Copy + PartialEq + PartialOrd + Debug,
 {
     type Item = T;
     type IntoIter = RangeIterator<T>;
@@ -238,7 +247,7 @@ where
 
 impl<T> RangeIterator<T>
 where
-    T: Step + Copy + PartialEq + PartialOrd + Debug
+    T: Step + Copy + PartialEq + PartialOrd + Debug,
 {
     pub fn new(l: T, r: T) -> Self {
         Self { current: l, end: r }
@@ -247,7 +256,7 @@ where
 
 impl<T> Iterator for RangeIterator<T>
 where
-    T: Step + Copy + PartialEq + PartialOrd + Debug
+    T: Step + Copy + PartialEq + PartialOrd + Debug,
 {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {

@@ -1,24 +1,27 @@
 use bitflags::*;
 use lazy_static::*;
-use log::{info, debug};
+use log::{debug, info};
 use riscv::register::satp;
 use xmas_elf;
 
-use alloc::sync::Arc;
 use alloc::collections::BTreeMap;
+use alloc::sync::Arc;
 use alloc::vec::Vec;
 
 use core::arch::asm;
 
 use crate::config::TRAMPOLINE;
-use crate::mm::map::{MapType, MapPermission};
-use crate::{sync::up::UPSafeCell, config::{PAGE_SZ, MEM_END, MMIO}, mm::addr::Step};
+use crate::mm::map::{MapPermission, MapType};
+use crate::{
+    config::{MEM_END, MMIO, PAGE_SZ},
+    mm::addr::Step,
+    sync::up::UPSafeCell,
+};
 
-use super::addr::{ VirtAddr, VirtPageNr, VPNRange, PhysPageNr, PhysAddr };
-use super::frame::{FrameTracker, alloc_frame};
+use super::addr::{PhysAddr, PhysPageNr, VPNRange, VirtAddr, VirtPageNr};
+use super::frame::{alloc_frame, FrameTracker};
 use super::map::MapArea;
-use super::page::{ PageTable, PTEFlags, PageTableEntry };
-
+use super::page::{PTEFlags, PageTable, PageTableEntry};
 
 extern "C" {
     fn stext();
@@ -57,7 +60,10 @@ impl MemorySet {
         info!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
         info!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
         info!(".data [{:#x}, {:#x})", sdata as usize, edata as usize);
-        info!(".bss [{:#x}, {:#x})", sbss_with_stack as usize, ebss as usize);
+        info!(
+            ".bss [{:#x}, {:#x})",
+            sbss_with_stack as usize, ebss as usize
+        );
 
         info!("Mapping .text section...");
         memset.push(
@@ -101,7 +107,7 @@ impl MemorySet {
                 MapPermission::R | MapPermission::W,
             ),
             None,
-        );        
+        );
 
         info!("Mapping physical memory...");
         memset.push(
@@ -126,7 +132,7 @@ impl MemorySet {
                 None,
             );
         }
-        
+
         memset
     }
 
@@ -143,10 +149,7 @@ impl MemorySet {
     }
 
     pub fn insert_framed_area(&mut self, sva: VirtAddr, eva: VirtAddr, perm: MapPermission) {
-        self.push(
-            MapArea::new(sva, eva, MapType::Framed, perm),
-            None
-        );
+        self.push(MapArea::new(sva, eva, MapType::Framed, perm), None);
     }
 
     pub fn remove_area(&mut self, svpn: VirtPageNr) {
@@ -168,7 +171,7 @@ impl MemorySet {
                 dst_ppn.bytes_arr().copy_from_slice(src_ppn.bytes_arr());
             }
         }
-        
+
         memset
     }
 
@@ -185,7 +188,7 @@ impl MemorySet {
         // check elf magic
         let magic = header.pt1.magic;
         assert_eq!(magic, [0x7f, 0x45, 0x4c, 0x46], "Invalid elf.");
-        
+
         // map program headers with (at least) U-flag
         let ph_count = header.pt2.ph_count();
         let mut max_evpn = VirtPageNr::from(0);
@@ -220,11 +223,7 @@ impl MemorySet {
         let mut ustack_base = max_eva.as_usize();
         ustack_base += PAGE_SZ;
 
-        (
-            memset,
-            ustack_base,
-            header.pt2.entry_point() as usize,
-        )
+        (memset, ustack_base, header.pt2.entry_point() as usize)
     }
 
     pub fn translate(&self, vpn: VirtPageNr) -> Option<PageTableEntry> {
@@ -248,15 +247,9 @@ impl MemorySet {
     }
 }
 
-lazy_static!{
-    pub static ref KSPACE: Arc<UPSafeCell<MemorySet>>
-        = Arc::new(
-            unsafe {
-                UPSafeCell::new(
-                    MemorySet::new_kernel()
-                )
-            }
-        );
+lazy_static! {
+    pub static ref KSPACE: Arc<UPSafeCell<MemorySet>> =
+        Arc::new(unsafe { UPSafeCell::new(MemorySet::new_kernel()) });
 }
 
 pub fn ktoken() -> usize {

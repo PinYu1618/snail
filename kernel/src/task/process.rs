@@ -1,11 +1,28 @@
-use alloc::{vec::Vec, sync::{Arc, Weak}};
+use alloc::vec;
+use alloc::{
+    sync::{Arc, Weak},
+    vec::Vec,
+};
 
 use core::cell::RefMut;
 
-use crate::{mm::{memset::{MemorySet, KSPACE}, addr::{PhysPageNr, VirtAddr}}, sync::up::UPSafeCell, config::TRAP_CONTEXT_BASE, task::pid::alloc_pid, trap::trap_handler};
+use crate::{
+    config::TRAP_CONTEXT_BASE,
+    fs::stdio::{Stdin, Stdout},
+    mm::{
+        addr::{PhysPageNr, VirtAddr},
+        memset::{MemorySet, KSPACE},
+    },
+    sync::up::UPSafeCell,
+    task::pid::alloc_pid,
+    trap::trap_handler,
+};
 use crate::{fs::File, trap::context::TrapContext};
 
-use super::{context::ProcessContext, pid::{PidHandle, KStack}};
+use super::{
+    context::ProcessContext,
+    pid::{KStack, PidHandle},
+};
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum ProcessStatus {
@@ -33,7 +50,7 @@ pub struct PcbInner {
     pub parent: Option<Weak<ProcessCtrlBlock>>,
     pub children: Vec<Arc<ProcessCtrlBlock>>,
     pub memset: MemorySet,
-    //pub fd_table: Vec<Option<Arc<dyn File + Send + Sync>>>,
+    pub fd_table: Vec<Option<Arc<dyn File + Send + Sync>>>,
 }
 
 impl ProcessCtrlBlock {
@@ -46,7 +63,8 @@ impl ProcessCtrlBlock {
         // map trap context ppn
         let trap_cx_ppn = memset
             .translate(VirtAddr::from(TRAP_CONTEXT_BASE).into())
-            .unwrap().ppn();
+            .unwrap()
+            .ppn();
         // alloc a pid
         let pid_handle = alloc_pid();
         // alloc a kstack in kspace
@@ -57,18 +75,24 @@ impl ProcessCtrlBlock {
             pid: pid_handle,
             kstack,
             inner: unsafe {
-                UPSafeCell::new(
-                    PcbInner {
-                        trap_cx_ppn,
-                        base_size: usp,
-                        process_cx: ProcessContext::goto_trap_return(ksp),
-                        status: ProcessStatus::Ready,
-                        memset,
-                        parent: None,
-                        children: Vec::new(),
-                        exit_code: 0,
-                    }
-                )
+                UPSafeCell::new(PcbInner {
+                    trap_cx_ppn,
+                    base_size: usp,
+                    process_cx: ProcessContext::goto_trap_return(ksp),
+                    status: ProcessStatus::Ready,
+                    memset,
+                    parent: None,
+                    children: Vec::new(),
+                    exit_code: 0,
+                    fd_table: vec![
+                        // 0 -> stdin
+                        Some(Arc::new(Stdin)),
+                        // 1 -> stdout
+                        Some(Arc::new(Stdout)),
+                        // 2 -> stderr
+                        Some(Arc::new(Stdout)),
+                    ],
+                })
             },
         };
 
@@ -79,13 +103,15 @@ impl ProcessCtrlBlock {
             usp,
             KSPACE.exclusive_access().token(),
             ksp,
-            trap_handler as usize
+            trap_handler as usize,
         );
 
         pcb
     }
 
-    pub fn pid(&self) -> usize { self.pid.0 }
+    pub fn pid(&self) -> usize {
+        self.pid.0
+    }
 
     pub fn fork(self: &Arc<ProcessCtrlBlock>) -> Arc<ProcessCtrlBlock> {
         unimplemented!()
@@ -109,5 +135,7 @@ impl PcbInner {
         self.status() == ProcessStatus::Zombie
     }
 
-    fn status(&self) -> ProcessStatus { self.status }
+    fn status(&self) -> ProcessStatus {
+        self.status
+    }
 }

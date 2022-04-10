@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 use crate::config::MEM_END;
 use crate::sync::up::UPSafeCell;
 
-use super::addr::{ PhysAddr, PhysPageNr };
+use super::addr::{PhysAddr, PhysPageNr};
 
 pub trait FrameAlloc {
     fn new() -> Self;
@@ -34,7 +34,9 @@ impl FrameTracker {
         Self { ppn }
     }
 
-    pub fn ppn(&self) -> PhysPageNr { self.ppn }
+    pub fn ppn(&self) -> PhysPageNr {
+        self.ppn
+    }
 }
 
 impl Drop for FrameTracker {
@@ -74,10 +76,7 @@ impl FrameAlloc for StackFrameAllocator {
     fn dealloc(&mut self, ppn: PhysPageNr) {
         let ppn = ppn.as_usize();
         // validity check
-        if ppn >= self.current || self.recycled
-            .iter()
-            .find(|&v| {*v == ppn})
-            .is_some() {
+        if ppn >= self.current || self.recycled.iter().find(|&v| *v == ppn).is_some() {
             panic!("Frame ppn={:#x} has not been allocated!", ppn);
         }
         // recycle
@@ -86,18 +85,18 @@ impl FrameAlloc for StackFrameAllocator {
 }
 
 lazy_static! {
-    pub static ref FRAME_ALLOCATOR: UPSafeCell<FrameAllocImpl> = unsafe {
-        UPSafeCell::new(FrameAllocImpl::new())
-    };
+    pub static ref FRAME_ALLOCATOR: UPSafeCell<FrameAllocImpl> =
+        unsafe { UPSafeCell::new(FrameAllocImpl::new()) };
 }
 
 pub fn init() {
     extern "C" {
         fn ekernel();
     }
-    FRAME_ALLOCATOR
-        .exclusive_access()
-        .init(PhysAddr::from(ekernel as usize).ceil(), PhysAddr::from(MEM_END).floor());
+    FRAME_ALLOCATOR.exclusive_access().init(
+        PhysAddr::from(ekernel as usize).ceil(),
+        PhysAddr::from(MEM_END).floor(),
+    );
 }
 
 pub fn alloc_frame() -> Option<FrameTracker> {

@@ -1,9 +1,12 @@
 use bitflags::*;
 
-use alloc::{vec, string::String};
 use alloc::vec::Vec;
+use alloc::{string::String, vec};
 
-use super::{addr::{ VirtAddr, PhysAddr, VirtPageNr, PhysPageNr }, frame::{FrameTracker, alloc_frame}};
+use super::{
+    addr::{PhysAddr, PhysPageNr, VirtAddr, VirtPageNr},
+    frame::{alloc_frame, FrameTracker},
+};
 
 bitflags! {
     pub struct PTEFlags: u8 {
@@ -127,9 +130,7 @@ impl PageTableEntry {
     }
 
     pub fn empty() -> Self {
-        PageTableEntry {
-            bits: 0,
-        }
+        PageTableEntry { bits: 0 }
     }
 
     pub fn ppn(&self) -> PhysPageNr {
@@ -177,10 +178,7 @@ pub fn translated_str(token: usize, ptr: *const u8) -> String {
     let mut string = String::new();
     let mut va = ptr as usize;
     loop {
-        let ch: u8 = *(pt
-            .translate_va(VirtAddr::from(va))
-            .unwrap()
-            .get_mut());
+        let ch: u8 = *(pt.translate_va(VirtAddr::from(va)).unwrap().get_mut());
         if ch == 0 {
             break;
         }

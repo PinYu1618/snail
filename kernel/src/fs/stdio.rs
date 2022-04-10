@@ -15,9 +15,13 @@ impl File for Stdin {
         panic!("Cannot write to Stdin.");
     }
 
-    fn readable(&self) -> bool { true }
+    fn readable(&self) -> bool {
+        true
+    }
 
-    fn writable(&self) -> bool { false }
+    fn writable(&self) -> bool {
+        false
+    }
 }
 
 impl File for Stdout {
@@ -32,7 +36,11 @@ impl File for Stdout {
         user_buf.len()
     }
 
-    fn readable(&self) -> bool { false }
+    fn readable(&self) -> bool {
+        false
+    }
 
-    fn writable(&self) -> bool { true }
+    fn writable(&self) -> bool {
+        true
+    }
 }
