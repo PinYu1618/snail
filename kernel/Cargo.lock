@@ -152,18 +152,9 @@ dependencies = [
  "log",
  "riscv",
  "snail-fs",
- "snail-user",
  "spin 0.5.2",
  "virtio-drivers",
  "xmas-elf",
-]
-
-[[package]]
-name = "snail-user"
-version = "0.1.0"
-dependencies = [
- "bitflags",
- "riscv",
 ]
 
 [[package]]

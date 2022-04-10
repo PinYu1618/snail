@@ -21,7 +21,7 @@ pub mod sync;
 pub mod task;
 pub mod mm;
 pub mod fs;
-pub mod shell;
+//pub mod shell;
 mod lang;
 
 #[cfg(test)]

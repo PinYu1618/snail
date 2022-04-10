@@ -2,6 +2,8 @@ pub const FD_STDOUT: usize = 1;
 
 //pub fn sys_linkat()
 
+use crate::{task::processor::{current_process, current_user_token}, mm::page::translated_str};
+
 pub fn sys_close(fd: usize) -> isize {
     unimplemented!()
 }
@@ -25,5 +27,9 @@ pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
 }
 
 pub fn sys_open(path: *const u8, flags: u32) -> isize {
+    let process = current_process().unwrap();
+    let token = current_user_token().unwrap();
+    let path = translated_str(token, path);
+
     unimplemented!()
 }

@@ -8,3 +8,5 @@ authors = ["Pin-Yu Chen <pycc1618@gmail.com>"]
 
 [dependencies]
 riscv = { git = "https://github.com/rcore-os/riscv", features = ["inline-asm"] }
+bitflags = "1.2.1"
+buddy_system_allocator = "0.6"

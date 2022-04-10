@@ -1,6 +1,6 @@
 use bitflags::*;
 
-use alloc::vec;
+use alloc::{vec, string::String};
 use alloc::vec::Vec;
 
 use super::{addr::{ VirtAddr, PhysAddr, VirtPageNr, PhysPageNr }, frame::{FrameTracker, alloc_frame}};
@@ -70,6 +70,14 @@ impl PageTable {
         let pte = self.find_pte(vpn).unwrap();
         assert!(pte.is_valid(), "vpn {:?} is invalid before unmapping", vpn);
         *pte = PageTableEntry::empty();
+    }
+
+    /// Temporarily used to get arguments from user space.
+    pub fn from_token(satp: usize) -> Self {
+        Self {
+            root_ppn: PhysPageNr::from(satp & ((1_usize << 44) - 1)),
+            frames: Vec::new(),
+        }
     }
 
     fn find_pte_or_create(&mut self, vpn: VirtPageNr) -> Option<&mut PageTableEntry> {
@@ -161,4 +169,23 @@ impl UserBuf {
         }
         total
     }
+}
+
+/// Load a string from other address spaces into kernel space without an end `\0`.
+pub fn translated_str(token: usize, ptr: *const u8) -> String {
+    let pt = PageTable::from_token(token);
+    let mut string = String::new();
+    let mut va = ptr as usize;
+    loop {
+        let ch: u8 = *(pt
+            .translate_va(VirtAddr::from(va))
+            .unwrap()
+            .get_mut());
+        if ch == 0 {
+            break;
+        }
+        string.push(ch as char);
+        va += 1;
+    }
+    string
 }

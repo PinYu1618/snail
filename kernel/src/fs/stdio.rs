@@ -12,7 +12,7 @@ impl File for Stdin {
     }
 
     fn write(&self, buf: UserBuf) -> usize {
-        unimplemented!()
+        panic!("Cannot write to Stdin.");
     }
 
     fn readable(&self) -> bool { true }

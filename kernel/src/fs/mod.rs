@@ -1,5 +1,4 @@
 mod stdio;
-mod fcntl;
 mod inode;
 
 use crate::mm::page::UserBuf;

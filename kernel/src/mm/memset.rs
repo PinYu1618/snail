@@ -259,6 +259,10 @@ lazy_static!{
         );
 }
 
+pub fn ktoken() -> usize {
+    KSPACE.exclusive_access().token()
+}
+
 #[cfg(dbg)]
 pub fn test_remap() {
     let mut kernel_space = KERNEL_SPACE.exclusive_access();

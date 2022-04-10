@@ -62,6 +62,14 @@ impl PhysAddr {
         PhysPageNr((self.as_usize() + PAGE_SZ - 1) / PAGE_SZ)
     }
 
+    pub fn get_ref<T>(&self) -> &'static T {
+        unsafe { (self.0 as *const T).as_ref().unwrap() }
+    }
+    
+    pub fn get_mut<T>(&self) -> &'static mut T {
+        unsafe { (self.0 as *mut T).as_mut().unwrap() }
+    }
+
     pub fn as_usize(&self) -> usize { self.0 }
 }
 
