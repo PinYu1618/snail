@@ -3,6 +3,7 @@ use bitflags::*;
 use alloc::vec::Vec;
 use alloc::{string::String, vec};
 
+use super::addr::Step;
 use super::{
     addr::{PhysAddr, PhysPageNr, VirtAddr, VirtPageNr},
     frame::{alloc_frame, FrameTracker},
@@ -186,4 +187,26 @@ pub fn translated_str(token: usize, ptr: *const u8) -> String {
         va += 1;
     }
     string
+}
+
+pub fn translated_byte_buf(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {
+    let pt = PageTable::from_token(token);
+    let mut start = ptr as usize;
+    let end = start + len;
+    let mut v = Vec::new();
+    while start < end {
+        let sva = VirtAddr::from(start);
+        let mut vpn = sva.floor();
+        let ppn = pt.translate(vpn).unwrap().ppn();
+        vpn.step();
+        let mut eva: VirtAddr = vpn.into();
+        eva = eva.min(VirtAddr::from(end));
+        if eva.page_offset() == 0 {
+            v.push(&mut ppn.bytes_arr()[sva.page_offset()..]);
+        } else {
+            v.push(&mut ppn.bytes_arr()[sva.page_offset()..eva.page_offset()]);
+        }
+        start = eva.into();
+    }
+    v
 }

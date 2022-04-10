@@ -45,3 +45,9 @@ lazy_static! {
         ProcessCtrlBlock::new(v.as_slice())
     });
 }
+
+pub fn add_initproc() {
+    add_task(INITPROC.clone());
+}
+
+pub use processor::run_tasks;

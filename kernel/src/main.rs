@@ -25,6 +25,8 @@ pub extern "C" fn kmain() -> ! {
     trap::init();
     trap::enable_timer_interrupt();
     timer::set_next_trigger();
+    fs::list_all_apps();
+    task::add_initproc();
     info!("Hyy, there.");
     loop {}
 }

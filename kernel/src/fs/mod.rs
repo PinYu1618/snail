@@ -9,3 +9,5 @@ pub trait File: Send + Sync {
     fn readable(&self) -> bool;
     fn writable(&self) -> bool;
 }
+
+pub use inode::list_all_apps;
