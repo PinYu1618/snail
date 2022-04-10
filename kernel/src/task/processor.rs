@@ -44,13 +44,10 @@ pub fn current_process() -> Option<Arc<ProcessCtrlBlock>> {
     PROCESSOR.exclusive_access().current()
 }
 
-pub fn current_user_token() -> Option<usize> {
-    if let Some(pcb) = current_process() {
-        let token = pcb.inner_exclusive_access().user_token();
-        Some(token)
-    } else {
-        None
-    }
+pub fn current_user_token() -> usize {
+    let pcb = current_process().unwrap();
+    let token = pcb.inner_exclusive_access().user_token();
+    token
 }
 
 pub fn run_tasks() {

@@ -30,4 +30,3 @@ log = "0.4"
 xmas-elf = "0.8.0"
 virtio-drivers = { git = "https://github.com/rcore-os/virtio-drivers" }
 snail-fs = { path = "../fs" }
-#snail-user = { path = "../user" }

@@ -1,4 +1,11 @@
-use crate::task::suspend_current_and_run_next;
+use crate::{
+    fs::inode::{open_file, OpenFlags},
+    mm::page::translated_str,
+    task::{
+        processor::{current_process, current_user_token},
+        suspend_current_and_run_next,
+    },
+};
 
 pub fn sys_exit(xstate: i32) -> ! {
     unimplemented!()
@@ -32,8 +39,17 @@ pub fn sys_fork() -> isize {
 ///     -1 (error)
 ///     no return (success)
 /// id: 221
-pub fn sys_exec(path: &str) -> isize {
-    unimplemented!()
+pub fn sys_exec(path: *const u8) -> isize {
+    let token = current_user_token();
+    let path = translated_str(token, path);
+    if let Some(app_inode) = open_file(path.as_str(), OpenFlags::RDONLY) {
+        let all_data = app_inode.read_all();
+        let process = current_process().unwrap();
+        process.exec(all_data.as_slice());
+        0
+    } else {
+        -1
+    }
 }
 
 /// func:

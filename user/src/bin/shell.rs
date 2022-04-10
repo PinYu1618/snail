@@ -1,13 +1,20 @@
-const LF: u8 = 0x0au8;    // line flush
-const CR: u8 = 0x0du8;    // carriage return
-const DL: u8 = 0x7fu8;    // delete
-const BS: u8 = 0x08u8;    // backspace
+#![no_std]
+#![no_main]
+
+#[macro_use]
+extern crate snail_user;
+extern crate alloc;
+
+const LF: u8 = 0x0au8; // line flush
+const CR: u8 = 0x0du8; // carriage return
+const DL: u8 = 0x7fu8; // delete
+const BS: u8 = 0x08u8; // backspace
 
 use alloc::string::String;
-use snail_user::{console::getchar, fork, waitpid, exec};
+use snail_user::{console::getchar, exec, fork, waitpid};
 
 #[no_mangle]
-pub fn ushell() -> i32 {
+pub fn main() -> i32 {
     println!("It's snail user shell!");
     let mut line = String::new();
     print!(">> ");
@@ -30,14 +37,11 @@ pub fn ushell() -> i32 {
                         let mut exit_code: i32 = 0;
                         let exit_pid = waitpid(pid as usize, &mut exit_code);
                         assert_eq!(pid, exit_pid);
-                        println!(
-                            "[Shell] Process {} exited with code {}",
-                            pid, exit_code
-                        );
+                        println!("[Shell] Process {} exited with code {}", pid, exit_code);
                     }
                     line.clear();
                 }
-            },
+            }
             BS | DL => {
                 if !line.is_empty() {
                     print!("{}", BS as char);
@@ -45,7 +49,7 @@ pub fn ushell() -> i32 {
                     print!("{}", BS as char);
                     line.pop();
                 }
-            },
+            }
             _ => {
                 print!("{}", c as char);
                 line.push(c as char);

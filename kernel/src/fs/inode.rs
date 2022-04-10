@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
 use spin::Mutex;
 
-use alloc::sync::Arc;
+use alloc::{sync::Arc, vec::Vec};
 
 use snail_fs::{Inode, SnailFileSystem};
 
@@ -39,6 +39,21 @@ impl KInode {
             writable,
             inner: Mutex::new(KInodeInner { offset: 0, inode }),
         }
+    }
+
+    pub fn read_all(&self) -> Vec<u8> {
+        let mut inner = self.inner.lock();
+        let mut buf = [0_u8; 512];
+        let mut v: Vec<u8> = Vec::new();
+        loop {
+            let len = inner.inode.read_at(inner.offset, &mut buf);
+            if len == 0 {
+                break;
+            }
+            inner.offset += len;
+            v.extend_from_slice(&buf[..len]);
+        }
+        v
     }
 }
 

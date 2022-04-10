@@ -1,4 +1,4 @@
-mod inode;
+pub mod inode;
 pub mod stdio;
 
 use crate::mm::page::UserBuf;

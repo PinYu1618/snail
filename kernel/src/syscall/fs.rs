@@ -1,14 +1,21 @@
 pub const FD_STDOUT: usize = 1;
 
-//pub fn sys_linkat()
-
 use crate::{
     mm::page::translated_str,
     task::processor::{current_process, current_user_token},
 };
 
 pub fn sys_close(fd: usize) -> isize {
-    unimplemented!()
+    let pcb = current_process().unwrap();
+    let mut inner = pcb.inner_exclusive_access();
+    if fd >= inner.fd_table.len() {
+        return -1;
+    }
+    if inner.fd_table[fd].is_none() {
+        return -1;
+    }
+    inner.fd_table[fd].take();
+    0
 }
 
 pub fn sys_read(fd: usize, buf: *const u8, len: usize) -> isize {
@@ -31,8 +38,10 @@ pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
 
 pub fn sys_open(path: *const u8, flags: u32) -> isize {
     let process = current_process().unwrap();
-    let token = current_user_token().unwrap();
+    let token = current_user_token();
     let path = translated_str(token, path);
 
     unimplemented!()
 }
+
+//pub fn sys_linkat()

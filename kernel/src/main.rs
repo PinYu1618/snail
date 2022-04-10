@@ -37,25 +37,4 @@ fn clear_bss() {
     (sbss as usize..ebss as usize).for_each(|a| unsafe { (a as *mut u8).write_volatile(0) });
 }
 
-//fn init() -> i32 {
-//    if fork() == 0 {
-//        exec("shell\0");
-//    } else {
-//        loop {
-//            let mut exit_code: i32 = 0;
-//            let pid = wait(&mut exit_code);
-//            if pid == -1 {
-//                yield_();
-//                continue;
-//            }
-//            println!(
-//                "[init] Released a zombie process, pid={}, exit code={}",
-//                pid,
-//                exit_code,
-//            );
-//        }
-//    }
-//    0
-//}
-
 global_asm!(include_str!("entry.s"));

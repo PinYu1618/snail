@@ -1,7 +1,15 @@
+use alloc::sync::Arc;
+use lazy_static::lazy_static;
 use log::warn;
 
-use crate::task::{
-    context::ProcessContext, ctrl::add_task, process::ProcessStatus, processor::schedule,
+use crate::{
+    fs::inode::{open_file, OpenFlags},
+    task::{
+        context::ProcessContext,
+        ctrl::add_task,
+        process::{ProcessCtrlBlock, ProcessStatus},
+        processor::schedule,
+    },
 };
 
 pub mod context;
@@ -28,4 +36,12 @@ pub fn suspend_current_and_run_next() {
     } else {
         warn!("No application running");
     }
+}
+
+lazy_static! {
+    pub static ref INITPROC: Arc<ProcessCtrlBlock> = Arc::new({
+        let inode = open_file("initproc", OpenFlags::RDONLY).unwrap();
+        let v = inode.read_all();
+        ProcessCtrlBlock::new(v.as_slice())
+    });
 }
