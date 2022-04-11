@@ -42,17 +42,17 @@ impl PageTable {
     pub fn new() -> Self {
         let frame = alloc_frame().unwrap();
         PageTable {
-            root_ppn: frame.ppn(),
+            root_ppn: frame.ppn,
             frames: vec![frame],
         }
     }
 
     pub fn token(&self) -> usize {
-        8_usize << 60 | self.root_ppn.as_usize()
+        8_usize << 60 | self.root_ppn.0
     }
 
     pub fn translate(&self, vpn: VirtPageNr) -> Option<PageTableEntry> {
-        self.find_pte(vpn).map(|pte| pte.clone())
+        self.find_pte(vpn).map(|pte| *pte)
     }
 
     pub fn translate_va(&self, va: VirtAddr) -> Option<PhysAddr> {
@@ -88,15 +88,15 @@ impl PageTable {
         let idxs = vpn.indexes();
         let mut ppn = self.root_ppn;
         let mut res: Option<&mut PageTableEntry> = None;
-        for i in 0..3 {
-            let pte = &mut ppn.pte_arr()[idxs[i]];
+        for (i, idx) in idxs.iter().enumerate() {
+            let pte = &mut ppn.pte_arr()[*idx];
             if i == 2 {
                 res = Some(pte);
                 break;
             }
             if !pte.is_valid() {
                 let frame = alloc_frame().unwrap();
-                *pte = PageTableEntry::new(frame.ppn(), PTEFlags::V);
+                *pte = PageTableEntry::new(frame.ppn, PTEFlags::V);
                 self.frames.push(frame);
             }
             ppn = pte.ppn();
@@ -108,8 +108,8 @@ impl PageTable {
         let idxs = vpn.indexes();
         let mut ppn = self.root_ppn;
         let mut res: Option<&mut PageTableEntry> = None;
-        for i in 0..3 {
-            let pte = &mut ppn.pte_arr()[idxs[i]];
+        for (i, idx) in idxs.iter().enumerate() {
+            let pte = &mut ppn.pte_arr()[*idx];
             if i == 2 {
                 res = Some(pte);
                 break;
@@ -126,7 +126,7 @@ impl PageTable {
 impl PageTableEntry {
     pub fn new(ppn: PhysPageNr, flags: PTEFlags) -> Self {
         PageTableEntry {
-            bits: ppn.as_usize() << 10 | flags.bits as usize,
+            bits: ppn.0 << 10 | flags.bits as usize,
         }
     }
 

@@ -15,7 +15,7 @@ pub trait FrameAlloc {
 
 #[derive(Clone, Debug)]
 pub struct FrameTracker {
-    ppn: PhysPageNr,
+    pub ppn: PhysPageNr,
 }
 
 pub struct StackFrameAllocator {
@@ -33,10 +33,6 @@ impl FrameTracker {
         }
         Self { ppn }
     }
-
-    pub fn ppn(&self) -> PhysPageNr {
-        self.ppn
-    }
 }
 
 impl Drop for FrameTracker {
@@ -49,8 +45,8 @@ type FrameAllocImpl = StackFrameAllocator;
 
 impl StackFrameAllocator {
     pub fn init(&mut self, l: PhysPageNr, r: PhysPageNr) {
-        self.current = l.as_usize();
-        self.end = r.as_usize();
+        self.current = l.0;
+        self.end = r.0;
     }
 }
 impl FrameAlloc for StackFrameAllocator {
@@ -64,13 +60,11 @@ impl FrameAlloc for StackFrameAllocator {
     fn alloc(&mut self) -> Option<PhysPageNr> {
         if let Some(ppn) = self.recycled.pop() {
             Some(ppn.into())
+        } else if self.current == self.end {
+            None
         } else {
-            if self.current == self.end {
-                None
-            } else {
-                self.current += 1;
-                Some((self.current - 1).into())
-            }
+            self.current += 1;
+            Some((self.current - 1).into())
         }
     }
     fn dealloc(&mut self, ppn: PhysPageNr) {

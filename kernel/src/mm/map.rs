@@ -76,7 +76,7 @@ impl MapArea {
             }
             MapType::Framed => {
                 let frame = alloc_frame().unwrap();
-                ppn = frame.ppn();
+                ppn = frame.ppn;
                 self.data_frames.insert(vpn, frame);
             }
         }

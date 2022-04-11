@@ -49,9 +49,9 @@ pub extern "C" fn virtio_dma_alloc(pages: usize) -> PhysAddr {
     for i in 0..pages {
         let frame = alloc_frame().unwrap();
         if i == 0 {
-            ppn_base = frame.ppn();
+            ppn_base = frame.ppn;
         }
-        assert_eq!(frame.ppn().as_usize(), ppn_base.as_usize() + i);
+        assert_eq!(frame.ppn.0, ppn_base.0 + i);
         QUEUE_FRAMES.lock().push(frame);
     }
     ppn_base.into()

@@ -10,7 +10,7 @@ use alloc::vec::Vec;
 
 use core::arch::asm;
 
-use crate::config::TRAMPOLINE;
+use crate::config::{TRAMPOLINE, USTACK_SZ, TRAP_CONTEXT_BASE};
 use crate::mm::map::{MapPermission, MapType};
 use crate::{
     config::{MEM_END, MMIO, PAGE_SZ},
@@ -220,11 +220,35 @@ impl MemorySet {
             }
         }
 
+        // map user stack with U flags
         let max_eva: VirtAddr = max_evpn.into();
-        let mut ustack_base = max_eva.as_usize();
-        ustack_base += PAGE_SZ;
+        let mut ustack_base: usize = max_eva.into();
 
-        (memset, ustack_base, header.pt2.entry_point() as usize)
+        // guard page
+        ustack_base += PAGE_SZ;
+        let ustack_top = ustack_base + USTACK_SZ;
+        memset.push(
+            MapArea::new(
+                ustack_base.into(),
+                ustack_top.into(),
+                MapType::Framed,
+                MapPermission::R | MapPermission::W | MapPermission::U,
+            ),
+            None,
+        );
+
+        // map TrapContext
+        memset.push(
+            MapArea::new(
+                TRAP_CONTEXT_BASE.into(),
+                TRAMPOLINE.into(),
+                MapType::Framed,
+                MapPermission::R | MapPermission::W,
+            ),
+            None,
+        );
+
+        (memset, ustack_top, header.pt2.entry_point() as usize)
     }
 
     pub fn translate(&self, vpn: VirtPageNr) -> Option<PageTableEntry> {
@@ -233,8 +257,8 @@ impl MemorySet {
 
     fn push(&mut self, mut map_area: MapArea, data: Option<&[u8]>) {
         map_area.map(&mut self.page_table);
-        if data.is_some() {
-            map_area.copy_data(&mut self.page_table, data.unwrap());
+        if let Some(data) = data {
+            map_area.copy_data(&mut self.page_table, data);
         }
         self.areas.push(map_area);
     }

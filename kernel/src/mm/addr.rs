@@ -12,19 +12,19 @@ const VPN_WIDTH_SV39: usize = VA_WIDTH_SV39 - PAGE_SZ_BITS; // 39 - 12
 
 #[repr(C)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
-pub struct PhysAddr(usize);
+pub struct PhysAddr(pub usize);
 
 #[repr(C)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
-pub struct PhysPageNr(usize);
+pub struct PhysPageNr(pub usize);
 
 #[repr(C)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
-pub struct VirtAddr(usize);
+pub struct VirtAddr(pub usize);
 
 #[repr(C)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
-pub struct VirtPageNr(usize);
+pub struct VirtPageNr(pub usize);
 
 #[derive(Copy, Clone, Debug)]
 pub struct Range<T>
@@ -51,15 +51,15 @@ pub trait Step {
 
 impl PhysAddr {
     pub fn page_offset(&self) -> usize {
-        self.as_usize() & (PAGE_SZ - 1)
+        self.0 & (PAGE_SZ - 1)
     }
 
     pub fn floor(&self) -> PhysPageNr {
-        PhysPageNr(self.as_usize() / PAGE_SZ)
+        PhysPageNr(self.0 / PAGE_SZ)
     }
 
     pub fn ceil(&self) -> PhysPageNr {
-        PhysPageNr((self.as_usize() + PAGE_SZ - 1) / PAGE_SZ)
+        PhysPageNr((self.0 + PAGE_SZ - 1) / PAGE_SZ)
     }
 
     pub fn get_ref<T>(&self) -> &'static T {
@@ -77,18 +77,18 @@ impl PhysAddr {
 
 impl PhysPageNr {
     pub fn bytes_arr(&self) -> &'static mut [u8] {
-        let pa: PhysAddr = (*self).clone().into();
-        unsafe { core::slice::from_raw_parts_mut(pa.as_usize() as *mut u8, PAGE_SZ) }
+        let pa: PhysAddr = (*self).into();
+        unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut u8, PAGE_SZ) }
     }
 
     pub fn pte_arr(&self) -> &'static mut [PageTableEntry] {
-        let pa: PhysAddr = (*self).clone().into();
-        unsafe { core::slice::from_raw_parts_mut(pa.as_usize() as *mut PageTableEntry, 512) }
+        let pa: PhysAddr = (*self).into();
+        unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut PageTableEntry, 512) }
     }
 
     pub fn get_mut<T>(&self) -> &'static mut T {
-        let pa: PhysAddr = self.clone().into();
-        unsafe { (pa.as_usize() as *mut T).as_mut().unwrap() }
+        let pa: PhysAddr = (*self).into();
+        pa.get_mut()
     }
 
     pub fn as_usize(&self) -> usize {
@@ -98,15 +98,15 @@ impl PhysPageNr {
 
 impl VirtAddr {
     pub fn page_offset(&self) -> usize {
-        self.as_usize() & (PAGE_SZ - 1)
+        self.0 & (PAGE_SZ - 1)
     }
 
     pub fn floor(&self) -> VirtPageNr {
-        VirtPageNr(self.as_usize() / PAGE_SZ)
+        VirtPageNr(self.0 / PAGE_SZ)
     }
 
     pub fn ceil(&self) -> VirtPageNr {
-        VirtPageNr((self.as_usize() + PAGE_SZ - 1) / PAGE_SZ)
+        VirtPageNr((self.0 + PAGE_SZ - 1) / PAGE_SZ)
     }
 
     pub fn as_usize(&self) -> usize {
@@ -116,7 +116,7 @@ impl VirtAddr {
 
 impl VirtPageNr {
     pub fn indexes(&self) -> [usize; 3] {
-        let mut vpn = self.as_usize();
+        let mut vpn = self.0;
         let mut idxs = [0_usize; 3];
         for i in (0..3).rev() {
             idxs[i] = vpn & 511;
