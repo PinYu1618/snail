@@ -3,6 +3,7 @@ use alloc::{
     sync::{Arc, Weak},
     vec::Vec,
 };
+use log::{debug, trace};
 
 use core::cell::RefMut;
 
@@ -65,6 +66,8 @@ impl ProcessCtrlBlock {
             .translate(VirtAddr::from(TRAP_CONTEXT_BASE).into())
             .unwrap()
             .ppn();
+        trace!("New process trap context ppn: {:?}", trap_cx_ppn);
+
         // alloc a pid
         let pid_handle = alloc_pid();
         // alloc a kstack in kspace
@@ -96,8 +99,11 @@ impl ProcessCtrlBlock {
             },
         };
 
+        debug!("Hi");
+
         // prepare trap context in user space
         let trap_cx = pcb.inner_exclusive_access().trap_cx();
+        debug!("Got trap context");
         *trap_cx = TrapContext::init_app_cx(
             entry,
             usp,

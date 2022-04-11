@@ -1,10 +1,12 @@
 #![feature(panic_info_message)]
 #![feature(alloc_error_handler)]
+//#![feature(custom_test_frameworks)]
 #![no_std]
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_macros)]
 #![allow(unused)]
+//#![test_runner(crate::test_runner)]
 
 #[macro_use]
 extern crate bitflags;
@@ -25,11 +27,10 @@ pub mod trap;
 //pub mod shell;
 mod lang;
 
-#[cfg(test)]
-mod test {
-    #[test]
-    #[should_panic]
-    fn panics_ok() {
-        assert!(false);
-    }
-}
+//#[cfg(test)]
+//fn test_runner(tests: &[&dyn Fn()]) {
+//    println!("Running {} tests", tests.len());
+//    for test in tests {
+//        test();
+//    }
+//}

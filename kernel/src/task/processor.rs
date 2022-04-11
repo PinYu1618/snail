@@ -2,7 +2,7 @@ use lazy_static::lazy_static;
 
 use alloc::sync::Arc;
 
-use crate::sync::up::UPSafeCell;
+use crate::{sync::up::UPSafeCell, trap::context::TrapContext};
 
 use super::{context::ProcessContext, ctrl::fetch_task, process::ProcessCtrlBlock};
 
@@ -66,3 +66,11 @@ pub fn run_tasks() {
 pub fn schedule(process_cx_ptr: *mut ProcessContext) {
     unimplemented!()
 }
+
+pub fn current_trap_cx() -> &'static mut TrapContext {
+    current_process()
+        .unwrap()
+        .inner_exclusive_access()
+        .trap_cx()
+}
+

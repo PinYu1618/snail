@@ -1,6 +1,6 @@
 use bitflags::*;
 use lazy_static::*;
-use log::{debug, info};
+use log::{debug, info, trace};
 use riscv::register::satp;
 use xmas_elf;
 
@@ -177,6 +177,7 @@ impl MemorySet {
 
     // Return (memset, ustack base, entry point) from user's elf file
     pub fn from_elf(elf_data: &[u8]) -> (Self, usize, usize) {
+        assert!(!elf_data.is_empty());
         let mut memset = Self::new_bare();
 
         // map trampoline

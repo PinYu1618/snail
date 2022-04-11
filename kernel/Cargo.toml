@@ -12,7 +12,6 @@ test = false
 
 [[bin]]
 name = "snail-kernel"
-test = false
 
 [profile.dev]
 panic = "abort"

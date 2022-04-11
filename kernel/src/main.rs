@@ -1,9 +1,12 @@
+#![feature(custom_test_frameworks)]
 #![no_std]
 #![no_main]
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![allow(unused_macros)]
 #![allow(unused)]
+#![test_runner(crate::test_runner)]
+#![reexport_test_harness_main = "test_main"]
 
 #[macro_use]
 extern crate snail_kernel;
@@ -11,6 +14,8 @@ extern crate snail_kernel;
 use log::{info, trace};
 
 use core::arch::global_asm;
+
+use core::ops::Fn;
 
 //use snail_user::{fork, wait, yield_, exit, exec};
 
@@ -28,6 +33,10 @@ pub extern "C" fn kmain() -> ! {
     fs::list_all_apps();
     task::add_initproc();
     info!("Hyy, there.");
+
+    #[cfg(test)]
+    test_main();
+
     loop {}
 }
 
@@ -40,3 +49,18 @@ fn clear_bss() {
 }
 
 global_asm!(include_str!("entry.s"));
+
+#[cfg(test)]
+fn test_runner(tests: &[&dyn Fn()]) {
+    println!("Running {} tests", tests.len());
+    for test in tests {
+        test();
+    }
+}
+
+#[test_case]
+fn trivial_assertion() {
+    print!("trivial assertion... ");
+    assert_eq!(1, 1);
+    println!("[ok]");
+}
