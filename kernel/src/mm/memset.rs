@@ -1,27 +1,14 @@
-use bitflags::*;
-use lazy_static::*;
-use log::{debug, info, trace};
-use riscv::register::satp;
-use xmas_elf;
-
-use alloc::collections::BTreeMap;
+use super::page::PTEFlags;
+use crate::config::*;
+use crate::mm::{
+    MapArea, MapPermission, MapType, PageTable, PageTableEntry, PhysAddr, VirtAddr, VirtPageNr,
+};
+use crate::sync::up::UPSafeCell;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
-
 use core::arch::asm;
-
-use crate::config::{TRAMPOLINE, USTACK_SZ, TRAP_CONTEXT_BASE};
-use crate::mm::map::{MapPermission, MapType};
-use crate::{
-    config::{MEM_END, MMIO, PAGE_SZ},
-    mm::addr::Step,
-    sync::up::UPSafeCell,
-};
-
-use super::addr::{PhysAddr, PhysPageNr, VPNRange, VirtAddr, VirtPageNr};
-use super::frame::{alloc_frame, FrameTracker};
-use super::map::MapArea;
-use super::page::{PTEFlags, PageTable, PageTableEntry};
+use riscv::register::satp;
+use xmas_elf;
 
 extern "C" {
     fn stext();
@@ -152,7 +139,7 @@ impl MemorySet {
         self.push(MapArea::new(sva, eva, MapType::Framed, perm), None);
     }
 
-    pub fn remove_area(&mut self, svpn: VirtPageNr) {
+    pub fn remove_area(&mut self, _svpn: VirtPageNr) {
         unimplemented!()
     }
 
@@ -168,14 +155,15 @@ impl MemorySet {
             for vpn in area.vpn_range {
                 let src_ppn = uspace.translate(vpn).unwrap().ppn();
                 let dst_ppn = memset.translate(vpn).unwrap().ppn();
-                dst_ppn.bytes_arr().copy_from_slice(src_ppn.bytes_arr());
+                dst_ppn.bytes_array().copy_from_slice(src_ppn.bytes_array());
             }
         }
 
-        memset
+        unimplemented!()
     }
 
-    // Return (memset, ustack base, entry point) from user's elf file
+    // Return (memset, ustack top, entry point) from user's elf file
+    // memset is with trampoline and trap context
     pub fn from_elf(elf_data: &[u8]) -> (Self, usize, usize) {
         assert!(!elf_data.is_empty());
         let mut memset = Self::new_bare();
@@ -281,7 +269,7 @@ pub fn ktoken() -> usize {
     KSPACE.exclusive_access().token()
 }
 
-#[cfg(dbg)]
+#[cfg(test)]
 pub fn test_remap() {
     let mut kernel_space = KERNEL_SPACE.exclusive_access();
     let mid_text: VirtAddr = ((stext as usize + etext as usize) / 2).into();

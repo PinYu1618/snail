@@ -82,7 +82,7 @@ impl QemuHsm {
     pub(crate) fn last_command(&self) -> Option<HsmCommand> {
         let hart_id = riscv::register::mhartid::read();
         let last_command_lock = self.last_command.lock();
-        let ans = last_command_lock.get(&hart_id).map(|c| *c);
+        let ans = last_command_lock.get(&hart_id).copied();
         drop(last_command_lock);
         ans
     }
@@ -107,6 +107,12 @@ impl QemuHsm {
             .lock()
             .entry(hart_id)
             .insert(AtomicU8::new(HsmState::Started as u8));
+    }
+}
+
+impl Default for QemuHsm {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -220,7 +226,7 @@ impl rustsbi::Hsm for QemuHsm {
                 }
                 drop(state_lock);
                 // actual suspend begin
-                suspend_current_hart(&self); // pause and wait for machine level ipi
+                suspend_current_hart(self); // pause and wait for machine level ipi
                                              // mark current hart as started
                 let mut state_lock = self.state.lock();
                 state_lock
@@ -250,7 +256,7 @@ impl rustsbi::Hsm for QemuHsm {
                 }
                 drop(state_lock);
                 // retentive suspend
-                suspend_current_hart(&self);
+                suspend_current_hart(self);
                 // begin wake process
                 // send start command to runtime of current hart
                 let mut config_lock = self.last_command.lock();

@@ -5,20 +5,24 @@ pub mod map;
 pub mod memset;
 pub mod page;
 
-use log::info;
-use memset::KSPACE;
+// Re-export
+pub use addr::{PhysAddr, PhysPageNr, VPNRange, VirtAddr, VirtPageNr};
+pub use frame::{FrameAllocator, FrameTracker};
+pub use map::{MapArea, MapPermission, MapType};
+pub use memset::MemorySet;
+pub use page::{PageTable, PageTableEntry, UserBuffer};
 
 pub fn init() {
     heap::init();
-    #[cfg(dbg)]
+    #[test_case]
     heap::heap_test();
 
-    frame::init();
-    #[cfg(dbg)]
+    FrameAllocator::init();
+    #[test_case]
     frame::test_frame_allocator();
 
-    KSPACE.exclusive_access().init();
-    #[cfg(dbg)]
+    memset::KSPACE.exclusive_access().init();
+    #[test_case]
     memset::test_remap();
     info!("mm init done!");
 }

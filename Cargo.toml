@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    "boot/riscv64",
+    "fs",
+    "kernel",
+    "tools",
+    "user"
+]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"

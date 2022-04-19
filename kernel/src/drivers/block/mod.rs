@@ -1,11 +1,10 @@
 pub mod virtio_blk;
 
+use snail_fs::BlockDevice;
 use alloc::sync::Arc;
-use lazy_static::lazy_static;
-use snail_fs::BlockDev;
 
 type BlockDevImpl = virtio_blk::VirtIOBlock;
 
 lazy_static! {
-    pub static ref BLOCK_DEV: Arc<dyn BlockDev> = Arc::new(BlockDevImpl::new());
+    pub static ref BLOCK_DEV: Arc<dyn BlockDevice> = Arc::new(BlockDevImpl::new());
 }

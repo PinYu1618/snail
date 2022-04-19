@@ -1,10 +1,8 @@
 [package]
 name = "snail-fs"
 version = "0.1.0"
+authors = ["PinYu1618 <pinyuchen658503@gmail.com>"]
 edition = "2021"
-authors = ["Pin-Yu Chen <pycc1618@gmail.com>"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 spin = "0.5.2"

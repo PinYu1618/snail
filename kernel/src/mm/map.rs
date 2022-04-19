@@ -1,12 +1,7 @@
-use alloc::collections::BTreeMap;
-
+use crate::mm::{PhysPageNr, VPNRange, VirtAddr, VirtPageNr, FrameAllocator, FrameTracker};
+use crate::mm::page::{PTEFlags, PageTable};
 use crate::{config::PAGE_SZ, mm::addr::Step};
-
-use super::addr::{PhysPageNr, VPNRange, VirtAddr, VirtPageNr};
-use super::{
-    frame::{alloc_frame, FrameTracker},
-    page::{PTEFlags, PageTable},
-};
+use alloc::collections::BTreeMap;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum MapType {
@@ -52,7 +47,7 @@ impl MapArea {
         let len = data.len();
         loop {
             let src = &data[start..len.min(start + PAGE_SZ)];
-            let dst = &mut pt.translate(current_vpn).unwrap().ppn().bytes_arr()[..src.len()];
+            let dst = &mut pt.translate(current_vpn).unwrap().ppn().bytes_array()[..src.len()];
             dst.copy_from_slice(src);
             start += PAGE_SZ;
             if start >= len {
@@ -72,10 +67,10 @@ impl MapArea {
         let ppn: PhysPageNr;
         match self.map_type {
             MapType::Identical => {
-                ppn = PhysPageNr::from(vpn.as_usize());
+                ppn = PhysPageNr::from(vpn.0);
             }
             MapType::Framed => {
-                let frame = alloc_frame().unwrap();
+                let frame = FrameAllocator::alloc_frame().unwrap();
                 ppn = frame.ppn;
                 self.data_frames.insert(vpn, frame);
             }

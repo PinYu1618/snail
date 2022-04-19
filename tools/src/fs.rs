@@ -1,4 +1,4 @@
-use snail_fs::{BlockDev, SnailFileSystem};
+use snail_fs::{BlockDevice, SnailFileSystem};
 use std::{
     fs::{read_dir, File, OpenOptions},
     io::{Read, Seek, SeekFrom, Write},
@@ -9,7 +9,7 @@ const BLOCK_SZ: usize = 512;
 
 struct BlockFile(Mutex<File>);
 
-impl BlockDev for BlockFile {
+impl BlockDevice for BlockFile {
     fn read_block(&self, block_id: usize, buf: &mut [u8]) {
         let mut file = self.0.lock().unwrap();
         file.seek(SeekFrom::Start((block_id * BLOCK_SZ) as u64))

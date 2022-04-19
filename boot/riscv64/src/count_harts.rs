@@ -19,7 +19,6 @@ struct DtbHeader {
 
 unsafe fn count_harts(dtb_pa: usize) -> usize {
     let header = &*(dtb_pa as *const DtbHeader);
-    // from_be 是大小端序的转换（from big endian）
     let magic = u32::from_be(header.magic);
     if magic == DEVICE_TREE_MAGIC {
         let size = u32::from_be(header.size);
@@ -44,9 +43,7 @@ fn enumerate_cpu_map(cpu_map_node: &Node) -> usize {
     let mut tot = 0;
     for cluster_node in cpu_map_node.children.iter() {
         let name = &cluster_node.name;
-        let count = cluster_node.children.iter().count();
-        // 会输出：Hart count: cluster0 with 2 cores
-        // 在justfile的“threads := "2"”处更改
+        let count = cluster_node.children.len();
         println!("[rustsbi-dtb] Hart count: {} with {} cores", name, count);
         tot += count;
     }

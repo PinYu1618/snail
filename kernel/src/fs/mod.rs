@@ -1,11 +1,14 @@
 pub mod inode;
 pub mod stdio;
 
-use crate::mm::page::UserBuf;
+use crate::mm::UserBuffer;
+
+pub use inode::{open_file, OpenFlags};
+pub use stdio::{Stdin, Stdout};
 
 pub trait File: Send + Sync {
-    fn read(&self, buf: UserBuf) -> usize;
-    fn write(&self, buf: UserBuf) -> usize;
+    fn read(&self, buf: UserBuffer) -> usize;
+    fn write(&self, buf: UserBuffer) -> usize;
     fn readable(&self) -> bool;
     fn writable(&self) -> bool;
 }

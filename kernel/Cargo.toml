@@ -1,23 +1,16 @@
 [package]
-name = "snail-kernel"
+name = "snail"
 version = "0.1.0"
+authors = ["PinYu1618 <pinyuchen658503@gmail.com>"]
 edition = "2021"
-authors = ["Pin-Yu Chen <pycc1618@gmail.com>"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+build = "build.rs"
 
 [lib]
-name = "snail_kernel"
-test = false
+name = "snail"
 
-[[bin]]
-name = "snail-kernel"
-
-[profile.dev]
-panic = "abort"
-
-[profile.release]
-panic = "abort"
+[[test]]
+name = "should_panic"
+harness = false
 
 [dependencies]
 lazy_static = { version = "1.0", features = ["spin_no_std"] }

@@ -1,18 +1,23 @@
-use crate::{
-    mm::page::{translated_str, UserBuf, translated_byte_buf},
-    task::processor::{current_process, current_user_token},
-};
+use crate::mm::{PageTable, UserBuffer};
+use crate::task::Processor;
+use crate::fs;
 
 pub fn sys_open(path: *const u8, flags: u32) -> isize {
-    let process = current_process().unwrap();
-    let token = current_user_token();
-    let path = translated_str(token, path);
-
-    unimplemented!()
+    let process = Processor::current_process().unwrap();
+    let token = Processor::current_user_token();
+    let path = PageTable::translated_str(token, path);
+    if let Some(inode) = fs::open_file(path.as_str(), fs::OpenFlags::from_bits(flags).unwrap()) {
+        let mut inner = process.inner_exclusive_access();
+        let fd = inner.alloc_fd();
+        inner.fd_table[fd] = Some(inode);
+        fd as isize
+    } else {
+        -1
+    }
 }
 
 pub fn sys_close(fd: usize) -> isize {
-    let pcb = current_process().unwrap();
+    let pcb = Processor::current_process().unwrap();
     let mut inner = pcb.inner_exclusive_access();
     if fd >= inner.fd_table.len() {
         return -1;
@@ -25,8 +30,8 @@ pub fn sys_close(fd: usize) -> isize {
 }
 
 pub fn sys_read(fd: usize, buf: *const u8, len: usize) -> isize {
-    let token = current_user_token();
-    let pcb = current_process().unwrap();
+    let token = Processor::current_user_token();
+    let pcb = Processor::current_process().unwrap();
     let inner = pcb.inner_exclusive_access();
     if fd >= inner.fd_table.len() {
         return -1;
@@ -38,15 +43,17 @@ pub fn sys_read(fd: usize, buf: *const u8, len: usize) -> isize {
         }
         // release current task pcb manually to avoid multi-borrow
         drop(inner);
-        file.read(UserBuf::new(translated_byte_buf(token, buf, len))) as isize
+        file.read(UserBuffer::new(PageTable::translated_byte_buf(
+            token, buf, len,
+        ))) as isize
     } else {
         -1
     }
 }
 
 pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
-    let token = current_user_token();
-    let pcb = current_process().unwrap();
+    let token = Processor::current_user_token();
+    let pcb = Processor::current_process().unwrap();
     let inner = pcb.inner_exclusive_access();
     if fd >= inner.fd_table.len() {
         return -1;
@@ -58,7 +65,9 @@ pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
         let file = file.clone();
         // release current task TCB manually to avoid multi-borrow
         drop(inner);
-        file.write(UserBuf::new(translated_byte_buf(token, buf, len))) as isize
+        file.write(UserBuffer::new(PageTable::translated_byte_buf(
+            token, buf, len,
+        ))) as isize
     } else {
         -1
     }

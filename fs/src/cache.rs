@@ -1,25 +1,28 @@
-use lazy_static::*;
 use spin::Mutex;
-
 use alloc::collections::VecDeque;
 use alloc::sync::Arc;
 
-use super::BlockDev;
-use super::BLOCK_SZ;
+use super::BlockDevice;
+use super::BLOCK_SIZE;
 
 const BLOCK_CACHE_LIMIT: usize = 16;
 
+lazy_static! {
+    pub static ref BLOCK_CACHER: Mutex<BlockCacher>
+        = Mutex::new(BlockCacher::default());
+}
+
 pub struct BlockCache {
-    content: [u8; BLOCK_SZ],
+    content: [u8; BLOCK_SIZE],
     block_id: usize,
-    block_dev: Arc<dyn BlockDev>,
+    block_dev: Arc<dyn BlockDevice>,
     modified: bool,
 }
 
 impl BlockCache {
     // Load a new BlockCache from disk.
-    pub fn new(id: usize, dev: Arc<dyn BlockDev>) -> Self {
-        let mut cache = [0_u8; BLOCK_SZ];
+    pub fn new(id: usize, dev: Arc<dyn BlockDevice>) -> Self {
+        let mut cache = [0_u8; BLOCK_SIZE];
         dev.read_block(id, &mut cache);
         Self {
             content: cache,
@@ -42,7 +45,7 @@ impl BlockCache {
         T: Sized,
     {
         let type_size = core::mem::size_of::<T>();
-        assert!(offset + type_size <= BLOCK_SZ);
+        assert!(offset + type_size <= BLOCK_SIZE);
         let addr = self.addr_of_offset(offset);
         unsafe { &*(addr as *const T) }
     }
@@ -52,7 +55,7 @@ impl BlockCache {
         T: Sized,
     {
         let type_size = core::mem::size_of::<T>();
-        assert!(offset + type_size <= BLOCK_SZ);
+        assert!(offset + type_size <= BLOCK_SIZE);
         self.modified = true;
         let addr = self.addr_of_offset(offset);
         unsafe { &mut *(addr as *mut T) }
@@ -87,7 +90,11 @@ impl BlockCacher {
         }
     }
 
-    fn cache_block(&mut self, id: usize, dev: Arc<dyn BlockDev>) -> Arc<Mutex<BlockCache>> {
+    pub fn cache_block(id: usize, dev: Arc<dyn BlockDevice>) -> Arc<Mutex<BlockCache>> {
+        BLOCK_CACHER.lock()._cache_block(id, dev)
+    }
+
+    fn _cache_block(&mut self, id: usize, dev: Arc<dyn BlockDevice>) -> Arc<Mutex<BlockCache>> {
         if let Some(pair) = self.queue.iter().find(|pair| pair.0 == id) {
             Arc::clone(&pair.1)
         } else {
@@ -113,10 +120,8 @@ impl BlockCacher {
     }
 }
 
-lazy_static! {
-    pub static ref BLOCK_CACHER: Mutex<BlockCacher> = Mutex::new(BlockCacher::new());
-}
-
-pub fn cache_block(id: usize, dev: Arc<dyn BlockDev>) -> Arc<Mutex<BlockCache>> {
-    BLOCK_CACHER.lock().cache_block(id, dev)
+impl Default for BlockCacher {
+    fn default() -> Self {
+        Self::new()
+    }
 }

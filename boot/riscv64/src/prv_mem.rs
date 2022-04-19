@@ -73,10 +73,7 @@ fn with_detect_trap(param: usize, f: impl FnOnce()) -> usize {
     let (mie, mtvec, tp) = unsafe { init_detect_trap(param) };
     // run detection inner
     f();
-    // restore trap handler and enable interrupts
-    let ans = unsafe { restore_detect_trap(mie, mtvec, tp) };
-    // return the answer
-    ans
+    unsafe { restore_detect_trap(mie, mtvec, tp) }
 }
 
 // rust trap handler for detect exceptions
@@ -112,7 +109,7 @@ fn riscv_illegal_instruction_bits(insn: u16) -> usize {
         return 4; // 32-bit
     }
     // FIXME: add >= 48-bit instructions in the future if we need to proceed with such instructions
-    return 0; // >= 48-bit, unknown from this function by now
+    0 // >= 48-bit, unknown from this function by now
 }
 
 // Initialize environment for trap detection and filter in exception only

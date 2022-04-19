@@ -1,13 +1,15 @@
-use lazy_static::lazy_static;
+use super::File;
+use crate::{drivers::block::BLOCK_DEV, mm::UserBuffer};
+use alloc::{sync::Arc, vec::Vec};
+use snail_fs::{Inode, SnailFileSystem};
 use spin::Mutex;
 
-use alloc::{sync::Arc, vec::Vec};
-
-use snail_fs::{Inode, SnailFileSystem};
-
-use crate::{drivers::block::BLOCK_DEV, mm::page::UserBuf};
-
-use super::File;
+lazy_static! {
+    pub static ref ROOT_INODE: Arc<Inode> = {
+        let sfs = SnailFileSystem::open(BLOCK_DEV.clone());
+        Arc::new(SnailFileSystem::root_inode(&sfs))
+    };
+}
 
 /// A regular file or directory which is opened in a process
 pub struct KInode {
@@ -58,7 +60,7 @@ impl KInode {
 }
 
 impl File for KInode {
-    fn read(&self, mut buf: UserBuf) -> usize {
+    fn read(&self, mut buf: UserBuffer) -> usize {
         let mut inner = self.inner.lock();
         let mut total_read_size = 0_usize;
         for slice in buf.buffers.iter_mut() {
@@ -72,7 +74,7 @@ impl File for KInode {
         total_read_size
     }
 
-    fn write(&self, buf: UserBuf) -> usize {
+    fn write(&self, buf: UserBuffer) -> usize {
         let mut inner = self.inner.lock();
         let mut total_write_size = 0_usize;
         for slice in buf.buffers.iter() {
@@ -105,13 +107,6 @@ impl OpenFlags {
             (true, true)
         }
     }
-}
-
-lazy_static! {
-    pub static ref ROOT_INODE: Arc<Inode> = {
-        let sfs = SnailFileSystem::open(BLOCK_DEV.clone());
-        Arc::new(SnailFileSystem::root_inode(&sfs))
-    };
 }
 
 pub fn list_all_apps() {

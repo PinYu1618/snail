@@ -1,20 +1,16 @@
 use spin::{Mutex, MutexGuard};
-
-use alloc::{string::String, sync::Arc, vec::Vec};
-
-use super::cache_block;
-use super::BlockDev;
-use super::DirEntry;
+use crate::{BlockCacher, BlockDevice, DirEntry};
 use super::DiskInode;
 use super::DiskInodeType;
 use super::SnailFileSystem;
 use super::DIRENT_SZ;
+use alloc::{string::String, sync::Arc, vec::Vec};
 
 pub struct Inode {
     block_id: usize,
     block_offset: usize,
     fs: Arc<Mutex<SnailFileSystem>>,
-    block_dev: Arc<dyn BlockDev>,
+    block_dev: Arc<dyn BlockDevice>,
 }
 
 impl Inode {
@@ -23,7 +19,7 @@ impl Inode {
         block_id: u32,
         block_offset: usize,
         fs: Arc<Mutex<SnailFileSystem>>,
-        block_dev: Arc<dyn BlockDev>,
+        block_dev: Arc<dyn BlockDevice>,
     ) -> Self {
         Self {
             block_id: block_id as usize,
@@ -67,15 +63,12 @@ impl Inode {
 
     pub fn create(&self, name: &str) -> Option<Arc<Inode>> {
         let mut fs = self.fs.lock();
-        if self
-            .modify_disk_inode(|root_inode| {
-                // assert it is a directory
-                assert!(root_inode.is_dir());
-                // has the file been created?
-                self.find_inode_id(name, root_inode)
-            })
-            .is_some()
-        {
+        if self.modify_disk_inode(|root_inode| {
+            // assert it is a directory
+            assert!(root_inode.is_dir());
+            // has the file been created?
+            self.find_inode_id(name, root_inode)
+        }).is_some() {
             return None;
         }
         // create a new file
@@ -83,7 +76,7 @@ impl Inode {
         let new_inode_id = fs.alloc_inode();
         // initialize inode
         let (new_inode_block_id, new_inode_block_offset) = fs.disk_inode_pos(new_inode_id);
-        cache_block(new_inode_block_id as usize, Arc::clone(&self.block_dev))
+        BlockCacher::cache_block(new_inode_block_id as usize, Arc::clone(&self.block_dev))
             .lock()
             .modify(new_inode_block_offset, |new_inode: &mut DiskInode| {
                 new_inode.init(DiskInodeType::File);
@@ -153,13 +146,13 @@ impl Inode {
     }
 
     fn read_disk_inode<V>(&self, f: impl FnOnce(&DiskInode) -> V) -> V {
-        cache_block(self.block_id, Arc::clone(&self.block_dev))
+        BlockCacher::cache_block(self.block_id, Arc::clone(&self.block_dev))
             .lock()
             .read(self.block_offset, f)
     }
 
     fn modify_disk_inode<V>(&self, f: impl FnOnce(&mut DiskInode) -> V) -> V {
-        cache_block(self.block_id, Arc::clone(&self.block_dev))
+        BlockCacher::cache_block(self.block_id, Arc::clone(&self.block_dev))
             .lock()
             .modify(self.block_offset, f)
     }

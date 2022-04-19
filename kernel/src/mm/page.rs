@@ -1,13 +1,8 @@
-use bitflags::*;
-
 use alloc::vec::Vec;
 use alloc::{string::String, vec};
 
 use super::addr::Step;
-use super::{
-    addr::{PhysAddr, PhysPageNr, VirtAddr, VirtPageNr},
-    frame::{alloc_frame, FrameTracker},
-};
+use crate::mm::{PhysAddr, PhysPageNr, VirtAddr, VirtPageNr, FrameAllocator, FrameTracker};
 
 bitflags! {
     pub struct PTEFlags: u8 {
@@ -34,13 +29,13 @@ pub struct PageTableEntry {
     pub bits: usize,
 }
 
-pub struct UserBuf {
+pub struct UserBuffer {
     pub buffers: Vec<&'static mut [u8]>,
 }
 
 impl PageTable {
     pub fn new() -> Self {
-        let frame = alloc_frame().unwrap();
+        let frame = FrameAllocator::alloc_frame().unwrap();
         PageTable {
             root_ppn: frame.ppn,
             frames: vec![frame],
@@ -84,18 +79,73 @@ impl PageTable {
         }
     }
 
+    /// Load a string from other address spaces into kernel space without an end `\0`.
+    pub fn translated_str(token: usize, ptr: *const u8) -> String {
+        let pt = PageTable::from_token(token);
+        let mut string = String::new();
+        let mut va = ptr as usize;
+        loop {
+            let ch: u8 = *(pt.translate_va(VirtAddr::from(va)).unwrap().get_mut());
+            if ch == 0 {
+                break;
+            }
+            string.push(ch as char);
+            va += 1;
+        }
+        string
+    }
+
+    pub fn translated_byte_buf(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {
+        let pt = Self::from_token(token);
+        let mut start = ptr as usize;
+        let end = start + len;
+        let mut v = Vec::new();
+        while start < end {
+            let sva = VirtAddr::from(start);
+            let mut vpn = sva.floor();
+            let ppn = pt.translate(vpn).unwrap().ppn();
+            vpn.step();
+            let mut eva: VirtAddr = vpn.into();
+            eva = eva.min(VirtAddr::from(end));
+            if eva.page_offset() == 0 {
+                v.push(&mut ppn.bytes_array()[sva.page_offset()..]);
+            } else {
+                v.push(&mut ppn.bytes_array()[sva.page_offset()..eva.page_offset()]);
+            }
+            start = eva.into();
+        }
+        v
+    }
+
+    pub fn translated_refmut<T>(token: usize, ptr: *mut T) -> &'static mut T {
+        let page_table = Self::from_token(token);
+        let va = ptr as usize;
+        page_table
+            .translate_va(VirtAddr::from(va))
+            .unwrap()
+            .get_mut()
+    }
+
+    pub fn translated_ref<T>(token: usize, ptr: *const T) -> &'static T {
+        let page_table = Self::from_token(token);
+        page_table
+            .translate_va(VirtAddr::from(ptr as usize))
+            .unwrap()
+            .get_ref()
+    }
+
     fn find_pte_or_create(&mut self, vpn: VirtPageNr) -> Option<&mut PageTableEntry> {
         let idxs = vpn.indexes();
         let mut ppn = self.root_ppn;
         let mut res: Option<&mut PageTableEntry> = None;
         for (i, idx) in idxs.iter().enumerate() {
-            let pte = &mut ppn.pte_arr()[*idx];
+            let pte = &mut ppn.pte_array()[*idx];
             if i == 2 {
                 res = Some(pte);
                 break;
             }
             if !pte.is_valid() {
-                let frame = alloc_frame().unwrap();
+                let frame = FrameAllocator::alloc_frame().unwrap();
                 *pte = PageTableEntry::new(frame.ppn, PTEFlags::V);
                 self.frames.push(frame);
             }
@@ -109,7 +159,7 @@ impl PageTable {
         let mut ppn = self.root_ppn;
         let mut res: Option<&mut PageTableEntry> = None;
         for (i, idx) in idxs.iter().enumerate() {
-            let pte = &mut ppn.pte_arr()[*idx];
+            let pte = &mut ppn.pte_array()[*idx];
             if i == 2 {
                 res = Some(pte);
                 break;
@@ -120,6 +170,12 @@ impl PageTable {
             ppn = pte.ppn();
         }
         res
+    }
+}
+
+impl Default for PageTable {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -159,7 +215,7 @@ impl PageTableEntry {
     }
 }
 
-impl UserBuf {
+impl UserBuffer {
     pub fn new(buffers: Vec<&'static mut [u8]>) -> Self {
         Self { buffers }
     }
@@ -171,42 +227,8 @@ impl UserBuf {
         }
         total
     }
-}
 
-/// Load a string from other address spaces into kernel space without an end `\0`.
-pub fn translated_str(token: usize, ptr: *const u8) -> String {
-    let pt = PageTable::from_token(token);
-    let mut string = String::new();
-    let mut va = ptr as usize;
-    loop {
-        let ch: u8 = *(pt.translate_va(VirtAddr::from(va)).unwrap().get_mut());
-        if ch == 0 {
-            break;
-        }
-        string.push(ch as char);
-        va += 1;
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
-    string
-}
-
-pub fn translated_byte_buf(token: usize, ptr: *const u8, len: usize) -> Vec<&'static mut [u8]> {
-    let pt = PageTable::from_token(token);
-    let mut start = ptr as usize;
-    let end = start + len;
-    let mut v = Vec::new();
-    while start < end {
-        let sva = VirtAddr::from(start);
-        let mut vpn = sva.floor();
-        let ppn = pt.translate(vpn).unwrap().ppn();
-        vpn.step();
-        let mut eva: VirtAddr = vpn.into();
-        eva = eva.min(VirtAddr::from(end));
-        if eva.page_offset() == 0 {
-            v.push(&mut ppn.bytes_arr()[sva.page_offset()..]);
-        } else {
-            v.push(&mut ppn.bytes_arr()[sva.page_offset()..eva.page_offset()]);
-        }
-        start = eva.into();
-    }
-    v
 }

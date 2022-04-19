@@ -1,17 +1,14 @@
-use crate::mm::page::UserBuf;
-
 use super::File;
+use crate::mm::UserBuffer;
 
 pub struct Stdin;
 
-pub struct Stdout;
-
 impl File for Stdin {
-    fn read(&self, mut buf: UserBuf) -> usize {
+    fn read(&self, mut _buf: UserBuffer) -> usize {
         unimplemented!()
     }
 
-    fn write(&self, buf: UserBuf) -> usize {
+    fn write(&self, _buf: UserBuffer) -> usize {
         panic!("Cannot write to Stdin.");
     }
 
@@ -24,12 +21,14 @@ impl File for Stdin {
     }
 }
 
+pub struct Stdout;
+
 impl File for Stdout {
-    fn read(&self, _user_buf: UserBuf) -> usize {
+    fn read(&self, _user_buf: UserBuffer) -> usize {
         panic!("Read is not supported for stdout");
     }
 
-    fn write(&self, user_buf: UserBuf) -> usize {
+    fn write(&self, user_buf: UserBuffer) -> usize {
         for buf in user_buf.buffers.iter() {
             print!("{}", core::str::from_utf8(*buf).unwrap());
         }

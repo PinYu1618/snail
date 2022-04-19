@@ -2,7 +2,7 @@ TARGET := riscv64gc-unknown-none-elf
 MODE := release
 APP_DIR := src/bin
 
-target_dir := target/$(TARGET)/$(MODE)
+app_target_dir := target/$(TARGET)/$(MODE)
 apps := $(wildcard $(APP_DIR)/*.rs)
 elfs := $(patsubst $(APP_DIR)/%.rs, $(target_dir)/%, $(apps))
 BINS := $(patsubst $(APP_DIR)/%.rs, $(target_dir)/%.bin, $(apps))

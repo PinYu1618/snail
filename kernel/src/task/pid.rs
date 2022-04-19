@@ -1,12 +1,14 @@
-use lazy_static::lazy_static;
-
-use alloc::vec::Vec;
-
-use crate::mm::{addr::VirtAddr, map::MapPermission, memset::KSPACE};
+use crate::mm::{memset::KSPACE, MapPermission, VirtAddr};
 use crate::{
     config::{KSTACK_SZ, PAGE_SZ, TRAMPOLINE},
     sync::up::UPSafeCell,
 };
+use alloc::vec::Vec;
+
+lazy_static! {
+    static ref PID_ALLOCATOR: UPSafeCell<PidAllocator> =
+        unsafe { UPSafeCell::new(PidAllocator::default()) };
+}
 
 // wrap pid in an struct so we can automatically recycle it
 #[derive(Clone)]
@@ -17,7 +19,7 @@ pub struct KStack {
     pid: usize,
 }
 
-struct PidAllocator {
+pub struct PidAllocator {
     current: usize,
     recycled: Vec<usize>,
 }
@@ -86,17 +88,22 @@ impl PidAllocator {
     pub fn dealloc(&mut self, pid: usize) {
         assert!(pid < self.current);
         assert!(
-            self.recycled.iter().find(|ppid| **ppid == pid).is_none(),
+            !self.recycled.iter().any(|ppid| *ppid == pid),
             "pid {} has been deallocated!",
             pid
         );
         self.recycled.push(pid);
     }
+
+    pub fn alloc_pid() -> PidHandle {
+        PID_ALLOCATOR.exclusive_access().alloc()
+    }
 }
 
-lazy_static! {
-    static ref PID_ALLOCATOR: UPSafeCell<PidAllocator> =
-        unsafe { UPSafeCell::new(PidAllocator::new()) };
+impl Default for PidAllocator {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 // return (bottom, top) of a kstack in kspace
@@ -104,8 +111,4 @@ pub fn kstack_pos(app_id: usize) -> (usize, usize) {
     let top = TRAMPOLINE - app_id * (KSTACK_SZ + PAGE_SZ);
     let bottom = top - KSTACK_SZ;
     (bottom, top)
-}
-
-pub fn alloc_pid() -> PidHandle {
-    PID_ALLOCATOR.exclusive_access().alloc()
 }

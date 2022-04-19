@@ -1,22 +1,18 @@
 pub mod context;
 
-use log::{error, trace};
+use crate::config::{TRAMPOLINE, TRAP_CONTEXT_BASE};
+use crate::syscall::syscall;
+use crate::task::Processor;
+use crate::timer::Timer;
+use core::arch::{asm, global_asm};
 use riscv::register::mtvec::TrapMode;
 use riscv::register::scause::{Exception, Interrupt, Trap};
 use riscv::register::{scause, sie, stval, stvec};
 
-use core::arch::{global_asm, asm};
-
-use crate::config::{TRAMPOLINE, TRAP_CONTEXT_BASE};
-use crate::syscall::syscall;
-use crate::task::processor::{current_user_token, current_trap_cx};
-use crate::task::suspend_current_and_run_next;
-use crate::timer::set_next_trigger;
-
-use context::TrapContext;
+pub use context::TrapContext;
 
 pub fn init() {
-    set_ktrap_entry();
+    set_kernel_trap_entry();
 }
 
 pub fn enable_timer_interrupt() {
@@ -27,16 +23,16 @@ pub fn enable_timer_interrupt() {
 
 #[no_mangle]
 pub fn trap_handler() -> ! {
-    set_ktrap_entry();
+    set_kernel_trap_entry();
     let scause = scause::read();
     let stval = stval::read();
     match scause.cause() {
         Trap::Exception(Exception::UserEnvCall) => {
             trace!("UserEnvCall, bobo!");
-            let mut cx = current_trap_cx();
+            let mut cx = Processor::current_trap_cx();
             cx.sepc += 4;
             let res = syscall(cx.x[17], [cx.x[10], cx.x[11], cx.x[12]]) as usize;
-            cx = current_trap_cx();
+            cx = Processor::current_trap_cx();
             cx.x[10] = res;
         }
         Trap::Exception(Exception::StoreFault) => {
@@ -54,8 +50,8 @@ pub fn trap_handler() -> ! {
             panic!("Bobo was panicked due to illegal instruction in application.");
         }
         Trap::Interrupt(Interrupt::SupervisorTimer) => {
-            set_next_trigger();
-            suspend_current_and_run_next();
+            Timer::set_next_trigger();
+            Processor::suspend_current_and_run_next();
         }
         _ => {
             panic!(
@@ -70,9 +66,9 @@ pub fn trap_handler() -> ! {
 
 #[no_mangle]
 pub fn trap_return() -> ! {
-    set_utrap_entry();
+    set_user_trap_entry();
     let trap_cx_ptr = TRAP_CONTEXT_BASE;
-    let user_satp = current_user_token();
+    let user_satp = Processor::current_user_token();
     extern "C" {
         fn __alltraps();
         fn __restore();
@@ -89,7 +85,7 @@ pub fn trap_return() -> ! {
             options(noreturn)
         );
     }
-    panic!("Unreachable in back_to_user!");
+    //panic!("Unreachable in back_to_user!");
 }
 
 #[no_mangle]
@@ -97,13 +93,13 @@ fn trap_from_kernel() {
     panic!("a trap from kernel!");
 }
 
-fn set_ktrap_entry() {
+fn set_kernel_trap_entry() {
     unsafe {
         stvec::write(trap_from_kernel as usize, TrapMode::Direct);
     }
 }
 
-fn set_utrap_entry() {
+fn set_user_trap_entry() {
     unsafe {
         stvec::write(TRAMPOLINE as usize, TrapMode::Direct);
     }

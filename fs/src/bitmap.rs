@@ -1,8 +1,7 @@
+use crate::{BlockCacher, BlockDevice, BLOCK_SIZE};
 use alloc::sync::Arc;
 
-use super::{cache_block, BlockDev, BLOCK_SZ};
-
-const BLOCK_BITS: usize = BLOCK_SZ * 8;
+const BLOCK_BITS: usize = BLOCK_SIZE * 8;
 
 pub type BitmapBlock = [u64; 64];
 
@@ -19,9 +18,9 @@ impl Bitmap {
         }
     }
 
-    pub fn alloc(&self, block_dev: &Arc<dyn BlockDev>) -> Option<usize> {
+    pub fn alloc(&self, block_dev: &Arc<dyn BlockDevice>) -> Option<usize> {
         for block_id in 0..self.blocks {
-            let pos = cache_block(
+            let pos = BlockCacher::cache_block(
                 block_id + self.start_block_id as usize,
                 Arc::clone(block_dev),
             )
@@ -47,9 +46,9 @@ impl Bitmap {
         None
     }
 
-    pub fn dealloc(&self, block_dev: &Arc<dyn BlockDev>, bit: usize) {
+    pub fn dealloc(&self, block_dev: &Arc<dyn BlockDevice>, bit: usize) {
         let (block_pos, bits64_pos, inner_pos) = decomposition(bit);
-        cache_block(block_pos + self.start_block_id, Arc::clone(block_dev))
+        BlockCacher::cache_block(block_pos + self.start_block_id, Arc::clone(block_dev))
             .lock()
             .modify(0, |bitmap_block: &mut BitmapBlock| {
                 assert!(bitmap_block[bits64_pos] & (1u64 << inner_pos) > 0);
@@ -65,6 +64,6 @@ impl Bitmap {
 /// Return (block_pos, bits64_pos, inner_pos)
 fn decomposition(mut bit: usize) -> (usize, usize, usize) {
     let block_pos = bit / BLOCK_BITS;
-    bit = bit % BLOCK_BITS;
+    bit %= BLOCK_BITS;
     (block_pos, bit / 64, bit % 64)
 }

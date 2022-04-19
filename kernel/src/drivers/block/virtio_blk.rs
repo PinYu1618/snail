@@ -1,14 +1,11 @@
-use alloc::vec::Vec;
-use lazy_static::lazy_static;
-use snail_fs::BlockDev;
 use spin::Mutex;
 use virtio_drivers::{VirtIOBlk, VirtIOHeader};
-
+use snail_fs::BlockDevice;
+use alloc::vec::Vec;
 use crate::mm::{
-    addr::{PhysAddr, PhysPageNr, Step, VirtAddr},
-    frame::{alloc_frame, dealloc_frame, FrameTracker},
-    memset::ktoken,
-    page::PageTable,
+    PhysAddr, PhysPageNr, VirtAddr,
+    addr::Step, FrameAllocator, FrameTracker,
+    memset::ktoken, PageTable,
 };
 
 const VIRTIO0: usize = 0x10001000;
@@ -23,7 +20,13 @@ impl VirtIOBlock {
     }
 }
 
-impl BlockDev for VirtIOBlock {
+impl Default for VirtIOBlock {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl BlockDevice for VirtIOBlock {
     fn read_block(&self, block_id: usize, buf: &mut [u8]) {
         self.0
             .lock()
@@ -47,7 +50,7 @@ lazy_static! {
 pub extern "C" fn virtio_dma_alloc(pages: usize) -> PhysAddr {
     let mut ppn_base = PhysPageNr::from(0);
     for i in 0..pages {
-        let frame = alloc_frame().unwrap();
+        let frame = FrameAllocator::alloc_frame().unwrap();
         if i == 0 {
             ppn_base = frame.ppn;
         }
@@ -61,7 +64,7 @@ pub extern "C" fn virtio_dma_alloc(pages: usize) -> PhysAddr {
 pub extern "C" fn virtio_dma_dealloc(pa: PhysAddr, pages: usize) -> i32 {
     let mut ppn_base: PhysPageNr = pa.into();
     for _ in 0..pages {
-        dealloc_frame(ppn_base);
+        FrameAllocator::dealloc_frame(ppn_base);
         ppn_base.step();
     }
     0
@@ -69,7 +72,7 @@ pub extern "C" fn virtio_dma_dealloc(pa: PhysAddr, pages: usize) -> i32 {
 
 #[no_mangle]
 pub extern "C" fn virtio_phys_to_virt(paddr: PhysAddr) -> VirtAddr {
-    VirtAddr::from(paddr.as_usize())
+    VirtAddr::from(paddr.0)
 }
 
 #[no_mangle]

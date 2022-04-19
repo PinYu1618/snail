@@ -1,37 +1,28 @@
-#![feature(custom_test_frameworks)]
 #![no_std]
 #![no_main]
-#![allow(dead_code)]
-#![allow(unused_imports)]
-#![allow(unused_macros)]
-#![allow(unused)]
-#![test_runner(crate::test_runner)]
+#![feature(alloc_error_handler)]
+#![feature(custom_test_frameworks)]
+#![test_runner(snail::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
 #[macro_use]
-extern crate snail_kernel;
-
-use log::{info, trace};
+extern crate log;
+extern crate alloc;
 
 use core::arch::global_asm;
-
-use core::ops::Fn;
-
-//use snail_user::{fork, wait, yield_, exit, exec};
-
-#[macro_use]
-use snail_kernel::*;
+use core::panic::PanicInfo;
+pub use snail::println;
 
 #[no_mangle]
 pub extern "C" fn kmain() -> ! {
     clear_bss();
-    logging::init();
-    mm::init();
-    trap::init();
-    trap::enable_timer_interrupt();
-    timer::set_next_trigger();
-    fs::list_all_apps();
-    task::add_initproc();
+    snail::logging::init().unwrap();
+    snail::mm::init();
+    snail::trap::init();
+    snail::trap::enable_timer_interrupt();
+    snail::timer::Timer::set_next_trigger();
+    snail::fs::list_all_apps();
+    snail::task::add_initproc();
     info!("Hyy, there.");
 
     #[cfg(test)]
@@ -50,17 +41,21 @@ fn clear_bss() {
 
 global_asm!(include_str!("entry.s"));
 
+/// This function is called on panic.
+#[cfg(not(test))]
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    println!("{}", info);
+    loop {}
+}
+
 #[cfg(test)]
-fn test_runner(tests: &[&dyn Fn()]) {
-    println!("Running {} tests", tests.len());
-    for test in tests {
-        test();
-    }
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    snail::test_panic_handler(info)
 }
 
 #[test_case]
 fn trivial_assertion() {
-    print!("trivial assertion... ");
     assert_eq!(1, 1);
-    println!("[ok]");
 }

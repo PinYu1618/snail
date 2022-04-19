@@ -3,7 +3,7 @@
 pub const USTACK_SZ: usize = 4096 * 2;
 
 pub const KSTACK_SZ: usize = 4096 * 2;
-pub const KHEAP_SZ: usize = 0x20_0000;
+pub const KERNEL_HEAP_SIZE: usize = 0x20_0000;
 
 pub const MEM_END: usize = 0x80f00000;
 pub const PAGE_SZ: usize = 0x1000;

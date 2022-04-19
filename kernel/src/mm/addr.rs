@@ -1,9 +1,7 @@
-use core::fmt::Debug;
-
+use super::page::PageTableEntry;
 use crate::config::PAGE_SZ;
 use crate::config::PAGE_SZ_BITS;
-
-use super::page::PageTableEntry;
+use core::fmt::Debug;
 
 const PA_WIDTH_SV39: usize = 56;
 const PPN_WIDTH_SV39: usize = PA_WIDTH_SV39 - PAGE_SZ_BITS; // 56 - 12
@@ -14,17 +12,155 @@ const VPN_WIDTH_SV39: usize = VA_WIDTH_SV39 - PAGE_SZ_BITS; // 39 - 12
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
 pub struct PhysAddr(pub usize);
 
+impl PhysAddr {
+    pub fn get_ref<T>(&self) -> &'static T {
+        unsafe { (self.0 as *const T).as_ref().unwrap() }
+    }
+
+    pub fn get_mut<T>(&self) -> &'static mut T {
+        unsafe { (self.0 as *mut T).as_mut().unwrap() }
+    }
+
+    pub fn page_offset(&self) -> usize {
+        self.0 & (PAGE_SZ - 1)
+    }
+
+    pub fn floor(&self) -> PhysPageNr {
+        PhysPageNr::from(self.0 / PAGE_SZ)
+    }
+
+    pub fn ceil(&self) -> PhysPageNr {
+        PhysPageNr::from((self.0 + PAGE_SZ - 1) / PAGE_SZ)
+    }
+}
+
+impl From<PhysAddr> for usize {
+    fn from(pa: PhysAddr) -> Self {
+        pa.0
+    }
+}
+
+impl From<usize> for PhysAddr {
+    fn from(v: usize) -> Self {
+        Self(v & ((1 << PA_WIDTH_SV39) - 1))
+    }
+}
+
 #[repr(C)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
 pub struct PhysPageNr(pub usize);
+
+impl PhysPageNr {
+    pub fn get_mut<T>(&self) -> &'static mut T {
+        let pa: PhysAddr = (*self).into();
+        pa.get_mut()
+    }
+
+    pub fn bytes_array(&self) -> &'static mut [u8] {
+        let pa: PhysAddr = (*self).into();
+        unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut u8, PAGE_SZ) }
+    }
+
+    pub fn pte_array(&self) -> &'static mut [PageTableEntry] {
+        let pa: PhysAddr = (*self).into();
+        unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut PageTableEntry, 512) }
+    }
+}
+
+impl From<PhysPageNr> for usize {
+    fn from(ppn: PhysPageNr) -> Self {
+        ppn.0
+    }
+}
+
+impl From<usize> for PhysPageNr {
+    fn from(v: usize) -> Self {
+        Self(v & ((1 << PPN_WIDTH_SV39) - 1))
+    }
+}
+
+impl From<PhysAddr> for PhysPageNr {
+    fn from(v: PhysAddr) -> Self {
+        assert_eq!(v.page_offset(), 0);
+        v.floor()
+    }
+}
+impl From<PhysPageNr> for PhysAddr {
+    fn from(v: PhysPageNr) -> Self {
+        Self::from(v.0 << PAGE_SZ_BITS)
+    }
+}
 
 #[repr(C)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
 pub struct VirtAddr(pub usize);
 
+impl VirtAddr {
+    pub fn page_offset(&self) -> usize {
+        self.0 & (PAGE_SZ - 1)
+    }
+
+    pub fn floor(&self) -> VirtPageNr {
+        VirtPageNr::from(self.0 / PAGE_SZ)
+    }
+
+    pub fn ceil(&self) -> VirtPageNr {
+        VirtPageNr::from((self.0 + PAGE_SZ - 1) / PAGE_SZ)
+    }
+}
+
+impl From<VirtAddr> for usize {
+    fn from(va: VirtAddr) -> Self {
+        va.0
+    }
+}
+
+impl From<usize> for VirtAddr {
+    fn from(v: usize) -> Self {
+        Self(v & ((1 << VA_WIDTH_SV39) - 1))
+    }
+}
+
 #[repr(C)]
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug)]
 pub struct VirtPageNr(pub usize);
+
+impl VirtPageNr {
+    pub fn indexes(&self) -> [usize; 3] {
+        let mut vpn = self.0;
+        let mut idxs = [0_usize; 3];
+        for i in (0..3).rev() {
+            idxs[i] = vpn & 511;
+            vpn >>= 9;
+        }
+        idxs
+    }
+}
+
+impl From<VirtPageNr> for usize {
+    fn from(vpn: VirtPageNr) -> Self {
+        vpn.0
+    }
+}
+
+impl From<usize> for VirtPageNr {
+    fn from(v: usize) -> Self {
+        Self(v & ((1 << VPN_WIDTH_SV39) - 1))
+    }
+}
+
+impl From<VirtAddr> for VirtPageNr {
+    fn from(va: VirtAddr) -> Self {
+        assert_eq!(va.page_offset(), 0);
+        va.floor()
+    }
+}
+
+impl From<VirtPageNr> for VirtAddr {
+    fn from(vpn: VirtPageNr) -> Self {
+        Self::from(vpn.0 << PAGE_SZ_BITS)
+    }
+}
 
 #[derive(Copy, Clone, Debug)]
 pub struct Range<T>
@@ -47,161 +183,6 @@ pub type VPNRange = Range<VirtPageNr>;
 
 pub trait Step {
     fn step(&mut self);
-}
-
-impl PhysAddr {
-    pub fn page_offset(&self) -> usize {
-        self.0 & (PAGE_SZ - 1)
-    }
-
-    pub fn floor(&self) -> PhysPageNr {
-        PhysPageNr(self.0 / PAGE_SZ)
-    }
-
-    pub fn ceil(&self) -> PhysPageNr {
-        PhysPageNr((self.0 + PAGE_SZ - 1) / PAGE_SZ)
-    }
-
-    pub fn get_ref<T>(&self) -> &'static T {
-        unsafe { (self.0 as *const T).as_ref().unwrap() }
-    }
-
-    pub fn get_mut<T>(&self) -> &'static mut T {
-        unsafe { (self.0 as *mut T).as_mut().unwrap() }
-    }
-
-    pub fn as_usize(&self) -> usize {
-        self.0
-    }
-}
-
-impl PhysPageNr {
-    pub fn bytes_arr(&self) -> &'static mut [u8] {
-        let pa: PhysAddr = (*self).into();
-        unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut u8, PAGE_SZ) }
-    }
-
-    pub fn pte_arr(&self) -> &'static mut [PageTableEntry] {
-        let pa: PhysAddr = (*self).into();
-        unsafe { core::slice::from_raw_parts_mut(pa.0 as *mut PageTableEntry, 512) }
-    }
-
-    pub fn get_mut<T>(&self) -> &'static mut T {
-        let pa: PhysAddr = (*self).into();
-        pa.get_mut()
-    }
-
-    pub fn as_usize(&self) -> usize {
-        self.0
-    }
-}
-
-impl VirtAddr {
-    pub fn page_offset(&self) -> usize {
-        self.0 & (PAGE_SZ - 1)
-    }
-
-    pub fn floor(&self) -> VirtPageNr {
-        VirtPageNr(self.0 / PAGE_SZ)
-    }
-
-    pub fn ceil(&self) -> VirtPageNr {
-        VirtPageNr((self.0 + PAGE_SZ - 1) / PAGE_SZ)
-    }
-
-    pub fn as_usize(&self) -> usize {
-        self.0
-    }
-}
-
-impl VirtPageNr {
-    pub fn indexes(&self) -> [usize; 3] {
-        let mut vpn = self.0;
-        let mut idxs = [0_usize; 3];
-        for i in (0..3).rev() {
-            idxs[i] = vpn & 511;
-            vpn >>= 9;
-        }
-        idxs
-    }
-
-    pub fn as_usize(&self) -> usize {
-        self.0
-    }
-}
-
-// conversions from { pa, ppn, va, vpn } to usize
-
-impl From<PhysAddr> for usize {
-    fn from(pa: PhysAddr) -> Self {
-        pa.0
-    }
-}
-impl From<PhysPageNr> for usize {
-    fn from(ppn: PhysPageNr) -> Self {
-        ppn.0
-    }
-}
-impl From<VirtAddr> for usize {
-    fn from(va: VirtAddr) -> Self {
-        va.0
-    }
-}
-impl From<VirtPageNr> for usize {
-    fn from(vpn: VirtPageNr) -> Self {
-        vpn.0
-    }
-}
-
-// conversions from usize to { pa, ppn, va, vpn }
-
-impl From<usize> for PhysAddr {
-    fn from(v: usize) -> Self {
-        Self(v & ((1 << PA_WIDTH_SV39) - 1))
-    }
-}
-impl From<usize> for PhysPageNr {
-    fn from(v: usize) -> Self {
-        Self(v & ((1 << PPN_WIDTH_SV39) - 1))
-    }
-}
-impl From<usize> for VirtAddr {
-    fn from(v: usize) -> Self {
-        Self(v & ((1 << VA_WIDTH_SV39) - 1))
-    }
-}
-impl From<usize> for VirtPageNr {
-    fn from(v: usize) -> Self {
-        Self(v & ((1 << VPN_WIDTH_SV39) - 1))
-    }
-}
-
-// conversions between pa and ppn
-
-impl From<PhysAddr> for PhysPageNr {
-    fn from(v: PhysAddr) -> Self {
-        assert_eq!(v.page_offset(), 0);
-        v.floor()
-    }
-}
-impl From<PhysPageNr> for PhysAddr {
-    fn from(v: PhysPageNr) -> Self {
-        Self(v.0 << PAGE_SZ_BITS)
-    }
-}
-
-// conversions between va and vpn
-
-impl From<VirtAddr> for VirtPageNr {
-    fn from(va: VirtAddr) -> Self {
-        assert_eq!(va.page_offset(), 0);
-        va.floor()
-    }
-}
-impl From<VirtPageNr> for VirtAddr {
-    fn from(v: VirtPageNr) -> Self {
-        Self(v.0 << PAGE_SZ_BITS)
-    }
 }
 
 // iterating

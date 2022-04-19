@@ -2,13 +2,13 @@ use crate::trap::trap_return;
 
 #[derive(Copy, Clone)]
 #[repr(C)]
-pub struct ProcessContext {
+pub struct TaskContext {
     ra: usize,      // return address
     sp: usize,      // kernel stack top
     s: [usize; 12], // s0~s11
 }
 
-impl ProcessContext {
+impl TaskContext {
     pub fn zero_init() -> Self {
         Self {
             ra: 0,
