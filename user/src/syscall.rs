@@ -4,6 +4,7 @@ const NR_UNLINKAT: usize = 35;
 const NR_LINKAT: usize = 37;
 const NR_OPEN: usize = 56;
 const NR_CLOSE: usize = 57;
+const NR_PIPE: usize = 59;
 const NR_READ: usize = 63;
 const NR_WRITE: usize = 64;
 const NR_FSTAT: usize = 80;
@@ -21,6 +22,10 @@ pub fn sys_open(path: &str, flags: u32) -> isize {
 
 pub fn sys_close(fd: usize) -> isize {
     syscall(NR_CLOSE, [fd, 0, 0])
+}
+
+pub fn sys_pipe(pipe: &mut [usize]) -> isize {
+    syscall(NR_PIPE, [pipe.as_mut_ptr() as usize, 0, 0])
 }
 
 pub fn sys_read(fd: usize, buf: &mut [u8]) -> isize {

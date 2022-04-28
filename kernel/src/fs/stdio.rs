@@ -1,11 +1,27 @@
-use super::File;
+use crate::fs::File;
 use crate::mm::UserBuffer;
+use crate::sbi::console_getchar;
+use crate::task::Processor;
 
+/// Stdin.
 pub struct Stdin;
 
 impl File for Stdin {
-    fn read(&self, mut _buf: UserBuffer) -> usize {
-        unimplemented!()
+    fn read(&self, mut buf: UserBuffer) -> usize {
+        assert_eq!(buf.len(), 1);
+        let mut c: usize;
+        loop {
+            c = console_getchar();
+            if c == 0 {
+                Processor::suspend_current_and_run_next();
+                continue;
+            } else {
+                break;
+            }
+        }
+        let ch = c as u8;
+        unsafe { buf.buffers[0].as_mut_ptr().write_volatile(ch); }
+        1
     }
 
     fn write(&self, _buf: UserBuffer) -> usize {
@@ -21,18 +37,19 @@ impl File for Stdin {
     }
 }
 
+/// Stdout.
 pub struct Stdout;
 
 impl File for Stdout {
-    fn read(&self, _user_buf: UserBuffer) -> usize {
+    fn read(&self, _buf: UserBuffer) -> usize {
         panic!("Read is not supported for stdout");
     }
 
-    fn write(&self, user_buf: UserBuffer) -> usize {
-        for buf in user_buf.buffers.iter() {
-            print!("{}", core::str::from_utf8(*buf).unwrap());
+    fn write(&self, buf: UserBuffer) -> usize {
+        for buffer in buf.buffers.iter() {
+            print!("{}", core::str::from_utf8(*buffer).unwrap());
         }
-        user_buf.len()
+        buf.len()
     }
 
     fn readable(&self) -> bool {

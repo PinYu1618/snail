@@ -1,8 +1,7 @@
-use super::File;
-use crate::{drivers::block::BLOCK_DEV, mm::UserBuffer};
-use alloc::{sync::Arc, vec::Vec};
-use snail_fs::{Inode, SnailFileSystem};
 use spin::Mutex;
+use snail_fs::{Inode, SnailFileSystem};
+use crate::{drivers::block::BLOCK_DEV, fs::File, mm::UserBuffer};
+use alloc::{sync::Arc, vec::Vec};
 
 lazy_static! {
     pub static ref ROOT_INODE: Arc<Inode> = {

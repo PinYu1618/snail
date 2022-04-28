@@ -1,10 +1,8 @@
 pub mod inode;
+pub mod pipe;
 pub mod stdio;
 
 use crate::mm::UserBuffer;
-
-pub use inode::{open_file, OpenFlags};
-pub use stdio::{Stdin, Stdout};
 
 pub trait File: Send + Sync {
     fn read(&self, buf: UserBuffer) -> usize;
@@ -13,4 +11,7 @@ pub trait File: Send + Sync {
     fn writable(&self) -> bool;
 }
 
-pub use inode::list_all_apps;
+/// Re-export
+pub use inode::{list_all_apps, open_file, OpenFlags};
+pub use pipe::make_pipe;
+pub use stdio::{Stdin, Stdout};

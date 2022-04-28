@@ -73,4 +73,10 @@ pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
     }
 }
 
+pub fn sys_pipe(_pipe: *mut usize) -> isize {
+    let _task = Processor::current_process().unwrap();
+    let _token = Processor::current_user_token();
+    unimplemented!()
+}
+
 //pub fn sys_linkat()

@@ -35,11 +35,11 @@ pub struct TaskCtrlBlock {
     pub pid: PidHandle,
     pub kstack: KStack,
     // mutable
-    inner: UPSafeCell<TcbInner>,
+    inner: UPSafeCell<TaskInner>,
 }
 
 #[derive(Clone)]
-pub struct TcbInner {
+pub struct TaskInner {
     pub trap_cx_ppn: PhysPageNr,
     pub base_size: usize,
     pub task_cx: TaskContext,
@@ -52,7 +52,7 @@ pub struct TcbInner {
 }
 
 impl TaskCtrlBlock {
-    pub fn inner_exclusive_access(&self) -> RefMut<'_, TcbInner> {
+    pub fn inner_exclusive_access(&self) -> RefMut<'_, TaskInner> {
         self.inner.exclusive_access()
     }
 
@@ -75,7 +75,7 @@ impl TaskCtrlBlock {
             pid: pid_handle,
             kstack,
             inner: unsafe {
-                UPSafeCell::new(TcbInner {
+                UPSafeCell::new(TaskInner {
                     trap_cx_ppn,
                     base_size: usp,
                     task_cx: TaskContext::goto_trap_return(ksp),
@@ -139,7 +139,7 @@ impl TaskCtrlBlock {
             pid: pid_handle,
             kstack: kernel_stack,
             inner: unsafe {
-                UPSafeCell::new(TcbInner {
+                UPSafeCell::new(TaskInner {
                     trap_cx_ppn,
                     base_size: parent_inner.base_size,
                     task_cx: TaskContext::goto_trap_return(kernel_stack_top),
@@ -217,7 +217,7 @@ impl TaskCtrlBlock {
     }
 }
 
-impl TcbInner {
+impl TaskInner {
     pub fn trap_cx(&self) -> &'static mut TrapContext {
         self.trap_cx_ppn.get_mut()
     }

@@ -8,6 +8,7 @@ use process::*;
 
 const NR_OPEN: usize = 56;
 const NR_CLOSE: usize = 57;
+const NR_PIPE: usize = 59;
 const NR_READ: usize = 63;
 const NR_WRITE: usize = 64;
 const NR_EXIT: usize = 93;
