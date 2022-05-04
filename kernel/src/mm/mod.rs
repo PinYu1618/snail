@@ -9,7 +9,7 @@ pub mod page;
 pub use addr::{PhysAddr, PhysPageNr, VPNRange, VirtAddr, VirtPageNr};
 pub use frame::{FrameAllocator, FrameTracker};
 pub use map::{MapArea, MapPermission, MapType};
-pub use memset::MemorySet;
+pub use memset::*;
 pub use page::{PageTable, PageTableEntry, UserBuffer};
 
 pub fn init() {

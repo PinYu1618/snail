@@ -1,6 +1,6 @@
 use super::addr::{PhysAddr, PhysPageNr};
 use crate::config::MEM_END;
-use crate::sync::up::UPSafeCell;
+use crate::sync::UPSafeCell;
 use alloc::vec::Vec;
 
 lazy_static! {

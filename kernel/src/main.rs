@@ -22,7 +22,7 @@ pub extern "C" fn kmain() -> ! {
     snail::trap::enable_timer_interrupt();
     snail::timer::Timer::set_next_trigger();
     snail::fs::list_all_apps();
-    snail::task::add_initproc();
+    snail::task_::add_initproc();
     info!("Hyy, there.");
 
     #[cfg(test)]

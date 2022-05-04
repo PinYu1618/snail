@@ -5,7 +5,7 @@ fn main() {
     if target.contains("riscv64") {
         println!("cargo:rustc-cfg=riscv");
         println!("cargo:rustc-cfg=riscv64");
-        println!("cargo:rustc-link-arg=-Tkernel/src/arch/riscv64/linker.ld");
+        println!("cargo:rustc-link-arg=-Tkernel/src/linker.ld");
     } else if target.contains("x86_64") {
         println!("cargo:rustc-cfg=x86_64");
     }

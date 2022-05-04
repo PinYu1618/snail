@@ -1,15 +1,13 @@
 pub mod context;
 
-use crate::config::{TRAMPOLINE, TRAP_CONTEXT_BASE};
+use crate::config::TRAP_CONTEXT_BASE;
 use crate::syscall::syscall;
-use crate::task::Processor;
+use crate::task_::Processor;
 use crate::timer::Timer;
 use core::arch::{asm, global_asm};
 use riscv::register::mtvec::TrapMode;
 use riscv::register::scause::{Exception, Interrupt, Trap};
 use riscv::register::{scause, sie, stval, stvec};
-
-pub use context::TrapContext;
 
 pub fn init() {
     set_kernel_trap_entry();
@@ -66,6 +64,7 @@ pub fn trap_handler() -> ! {
 
 #[no_mangle]
 pub fn trap_return() -> ! {
+    use crate::config;
     set_user_trap_entry();
     let trap_cx_ptr = TRAP_CONTEXT_BASE;
     let user_satp = Processor::current_user_token();
@@ -73,7 +72,7 @@ pub fn trap_return() -> ! {
         fn __alltraps();
         fn __restore();
     }
-    let restore_va = __restore as usize - __alltraps as usize + TRAMPOLINE;
+    let restore_va = __restore as usize - __alltraps as usize + config::TRAMPOLINE;
     //println!("before return");
     unsafe {
         asm!(
@@ -89,7 +88,9 @@ pub fn trap_return() -> ! {
 }
 
 #[no_mangle]
-fn trap_from_kernel() {
+pub fn trap_from_kernel() -> ! {
+    use riscv::register::sepc;
+    println!("stval = {:#x}, sepc = {:#x}", stval::read(), sepc::read());
     panic!("a trap from kernel!");
 }
 
@@ -100,9 +101,12 @@ fn set_kernel_trap_entry() {
 }
 
 fn set_user_trap_entry() {
+    use crate::config::TRAMPOLINE;
     unsafe {
         stvec::write(TRAMPOLINE as usize, TrapMode::Direct);
     }
 }
 
 global_asm!(include_str!("trap.s"));
+
+pub use context::TrapContext;

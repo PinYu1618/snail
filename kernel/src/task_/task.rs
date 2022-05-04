@@ -9,8 +9,8 @@ use crate::{
     config::TRAP_CONTEXT_BASE,
     fs::{Stdin, Stdout},
     mm::{memset::KSPACE, MemorySet, PageTable, PhysPageNr, VirtAddr},
-    sync::up::UPSafeCell,
-    task::PidAllocator,
+    sync::UPSafeCell,
+    task_::PidAllocator,
     trap::trap_handler,
 };
 use crate::{fs::File, trap::TrapContext};

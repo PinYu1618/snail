@@ -1,10 +1,11 @@
 use crate::fs::File;
 use crate::mm::UserBuffer;
 use crate::sbi::console_getchar;
-use crate::task::Processor;
+use crate::task_::Processor;
 
 /// Stdin.
 pub struct Stdin;
+pub struct Stderr;
 
 impl File for Stdin {
     fn read(&self, mut buf: UserBuffer) -> usize {
@@ -58,5 +59,23 @@ impl File for Stdout {
 
     fn writable(&self) -> bool {
         true
+    }
+}
+
+impl File for Stderr {
+    fn read(&self, _buf: UserBuffer) -> usize {
+        todo!()
+    }
+
+    fn write(&self, _buf: UserBuffer) -> usize {
+        todo!()
+    }
+
+    fn readable(&self) -> bool {
+        todo!()
+    }
+
+    fn writable(&self) -> bool {
+        todo!()
     }
 }

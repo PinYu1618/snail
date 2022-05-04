@@ -79,7 +79,7 @@ kernel:
 	@cd kernel && cargo build $(build_args)
 
 fs-img: $(apps)
-	@cd user
+	@cd user && cargo build --release
 	@rm -f $(app_img)
 	@cd tools && cargo run --release -- -s ../user/src/bin/ -t ../$(app_build_dir)/
 

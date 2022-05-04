@@ -1,3 +1,4 @@
+mod fd;
 pub mod inode;
 pub mod pipe;
 pub mod stdio;
@@ -12,6 +13,7 @@ pub trait File: Send + Sync {
 }
 
 /// Re-export
+pub use fd::{FileDescriptor, FileDescriptorTable};
 pub use inode::{list_all_apps, open_file, OpenFlags};
 pub use pipe::make_pipe;
-pub use stdio::{Stdin, Stdout};
+pub use stdio::{Stdin, Stdout, Stderr};

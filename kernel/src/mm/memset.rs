@@ -3,7 +3,7 @@ use crate::config::*;
 use crate::mm::{
     MapArea, MapPermission, MapType, PageTable, PageTableEntry, PhysAddr, VirtAddr, VirtPageNr,
 };
-use crate::sync::up::UPSafeCell;
+use crate::sync::UPSafeCell;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::arch::asm;
@@ -140,7 +140,7 @@ impl MemorySet {
     }
 
     pub fn remove_area(&mut self, _svpn: VirtPageNr) {
-        unimplemented!()
+        todo!()
     }
 
     pub fn from_existed_user(uspace: &MemorySet) -> MemorySet {

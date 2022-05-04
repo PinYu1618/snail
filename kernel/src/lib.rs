@@ -23,12 +23,9 @@ pub mod sbi;
 pub mod sync;
 pub mod syscall;
 pub mod task;
+pub mod task_;
 pub mod timer;
 pub mod trap;
-
-#[cfg(target_arch = "riscv64")]
-#[path = "arch/riscv64/mod.rs"]
-pub mod arch;
 
 use core::panic::PanicInfo;
 

@@ -1,99 +1,78 @@
-use crate::task::{TaskContext, TaskCtrller, TaskStatus};
-use crate::sync::up::UPSafeCell;
-use crate::task::TaskCtrlBlock;
-use crate::trap::TrapContext;
+use crate::{task::{ThreadCtrlBlock, ThreadContext}, sync::UPSafeCell, trap::TrapContext};
 use alloc::sync::Arc;
 
-lazy_static! {
-    static ref PROCESSOR: UPSafeCell<Processor> =
-        unsafe { UPSafeCell::new(Processor::default()) };
-}
+use super::ProcessCtrlBlock;
 
 pub struct Processor {
-    current: Option<Arc<TaskCtrlBlock>>,
-    idle_task_cx: TaskContext,
+    pub current: Option<Arc<ThreadCtrlBlock>>,
+    pub idle_thread_cx: ThreadContext,
+}
+
+pub fn current_thread() -> Option<Arc<ThreadCtrlBlock>> {
+    PROCESSOR.exclusive_access().current()
+}
+
+pub fn take_current_thread() -> Option<Arc<ThreadCtrlBlock>> {
+    PROCESSOR.exclusive_access().take_current()
+}
+
+pub fn current_process() -> Arc<ProcessCtrlBlock> {
+    current_thread().unwrap().process.upgrade().unwrap()
+}
+
+pub fn current_user_token() -> usize {
+    current_thread().unwrap().get_user_token()
+}
+
+pub fn get_current_trap_cx_mut() -> &'static mut TrapContext {
+    current_thread().unwrap().get_trap_cx_mut()
+}
+
+pub fn current_kstack_top() -> usize {
+    current_thread().unwrap().get_kstack_top()
+}
+
+pub fn schedule(_switched_thread_cx_ptr: *mut ThreadContext) {
+    todo!()
+}
+
+pub fn suspend_current_and_run_next() {
+    todo!()
+}
+
+pub fn block_current_and_run_next() {
+    todo!()
+}
+
+pub fn exit_current_and_run_next(_exit_code: i32) {
+    todo!()
+}
+
+pub fn add_initproc() {
+    todo!()
 }
 
 impl Processor {
+    pub fn get_idle_thread_cx_mut(&mut self) -> *mut ThreadContext {
+        &mut self.idle_thread_cx as *mut _
+    }
+
     pub fn new() -> Self {
         Self {
             current: None,
-            idle_task_cx: TaskContext::zero_init(),
+            idle_thread_cx: ThreadContext::zero_init(),
         }
     }
 
-    pub fn idle_task_cx_ptr(&mut self) -> *mut TaskContext {
-        &mut self.idle_task_cx as *mut _
-    }
-
-    pub fn take_current(&mut self) -> Option<Arc<TaskCtrlBlock>> {
-        self.current.take()
-    }
-
-    pub fn current(&self) -> Option<Arc<TaskCtrlBlock>> {
+    pub fn current(&self) -> Option<Arc<ThreadCtrlBlock>> {
         self.current.as_ref().map(Arc::clone)
     }
 
-    pub fn current_process() -> Option<Arc<TaskCtrlBlock>> {
-        PROCESSOR.exclusive_access().current()
-    }
-
-    pub fn take_current_process() -> Option<Arc<TaskCtrlBlock>> {
-        PROCESSOR.exclusive_access().take_current()
-    }
-
-    pub fn current_user_token() -> usize {
-        let pcb = Self::current_process().unwrap();
-        let token = pcb.inner_exclusive_access().user_token();
-        token
-    }
-
-    pub fn current_trap_cx() -> &'static mut TrapContext {
-        Self::current_process()
-            .unwrap()
-            .inner_exclusive_access()
-            .trap_cx()
-    }
-
-    pub fn run_tasks() {
-        loop {
-            let mut processor = PROCESSOR.exclusive_access();
-            if let Some(task) = TaskCtrller::fetch_task() {
-                let _idle_task_cx_ptr = processor.idle_task_cx_ptr();
-    
-                // access coming task pcb exclusively
-                let mut _pcb_inner = task.inner_exclusive_access();
-            }
-            unimplemented!()
-        }
-    }
-
-    pub fn schedule(_process_cx_ptr: *mut TaskContext) {
-        unimplemented!()
-    }
-
-    pub fn suspend_current_and_run_next() {
-        if let Some(pcb) = Self::take_current_process() {
-            // ---- access current pcb exclusively
-            let mut pcb_inner = pcb.inner_exclusive_access();
-            let process_cx_ptr = &mut pcb_inner.task_cx as *mut TaskContext;
-            // change status to ready
-            pcb_inner.task_status = TaskStatus::Ready;
-            drop(pcb_inner);
-            // ---- release current pcb
-    
-            // push back to ready queue
-            TaskCtrller::add_task(pcb);
-            // jump to scheduling cycle
-            Processor::schedule(process_cx_ptr);
-        } else {
-            warn!("No application running");
-        }
+    pub fn take_current(&mut self) -> Option<Arc<ThreadCtrlBlock>> {
+        self.current.take()
     }
 }
 
-impl Default for Processor {
-    fn default() -> Self {
-        Self::new()
-    }
+lazy_static! {
+    pub static ref PROCESSOR: UPSafeCell<Processor> = unsafe { UPSafeCell::new(Processor::new()) };
 }

@@ -1,5 +1,5 @@
 use super::task::TaskCtrlBlock;
-use crate::sync::up::UPSafeCell;
+use crate::sync::UPSafeCell;
 use alloc::{collections::VecDeque, sync::Arc};
 
 lazy_static! {
