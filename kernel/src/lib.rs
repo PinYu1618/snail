@@ -17,8 +17,10 @@ extern crate alloc;
 pub mod logging;
 pub mod config;
 pub mod drivers;
+mod errno;
 pub mod fs;
 pub mod mm;
+mod runtime;
 pub mod sbi;
 pub mod sync;
 pub mod syscall;
@@ -28,6 +30,9 @@ pub mod timer;
 pub mod trap;
 
 use core::panic::PanicInfo;
+
+pub use errno::Error;
+pub type Result<T> = core::result::Result<T, Error>;
 
 pub trait Testable {
     fn run(&self);

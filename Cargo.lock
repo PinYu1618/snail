@@ -367,6 +367,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "riscv"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e2856a701069e2d262b264750d382407d272d5527f7a51d3777d1805b4e2d3c"
+dependencies = [
+ "bare-metal 1.0.0",
+ "bit_field",
+ "embedded-hal",
+]
+
+[[package]]
 name = "riscv-target"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -425,7 +436,7 @@ dependencies = [
  "buddy_system_allocator 0.6.0",
  "lazy_static",
  "log",
- "riscv 0.6.0",
+ "riscv 0.8.0",
  "snail-fs",
  "spin 0.5.2",
  "virtio-drivers",

@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "boot/riscv64",
+    "boot",
     "fs",
     "kernel",
     "tools",

@@ -15,7 +15,7 @@ harness = false
 [dependencies]
 lazy_static = { version = "1.0", features = ["spin_no_std"] }
 spin = "0.5.2"
-riscv = { git = "https://github.com/rcore-os/riscv", features = ["inline-asm"] }
+riscv = "0.8.0"
 buddy_system_allocator = "0.6"
 bitflags = "1.2.1"
 log = "0.4"

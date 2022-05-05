@@ -84,7 +84,7 @@ fs-img: $(apps)
 	@cd tools && cargo run --release -- -s ../user/src/bin/ -t ../$(app_build_dir)/
 
 bootloader:
-	@cd boot/riscv64 && cargo build $(build_args)
+	@cd boot && cargo build $(build_args)
 	@$(objcopy) $(build_dir)/boot-$(ARCH) --strip-all -O binary $(build_dir)/boot-$(ARCH).bin
 
 .PHONY: all clean build kernel run run-inner fs-img bootloader

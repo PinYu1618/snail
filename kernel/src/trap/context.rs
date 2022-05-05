@@ -15,19 +15,12 @@ impl TrapContext {
         self.x[2] = sp;
     }
 
-    pub fn init_app_cx(
-        entry: usize,
-        sp: usize,
-        kernel_satp: usize,
-        kernel_stack_top: usize,
-        trap_handler: usize,
-    ) -> Self {
-        let mut sstatus = sstatus::read();
+    pub fn init_app_cx(entry: usize, sp: usize, kernel_satp: usize, kernel_stack_top: usize, trap_handler: usize) -> Self {
         // set cpu privilege to U after trapping back
-        sstatus.set_spp(SPP::User);
+        unsafe { sstatus::set_spp(SPP::User); }
         let mut cx = Self {
             x: [0; 32],
-            sstatus,
+            sstatus: sstatus::read(),
             sepc: entry,
             kernel_satp,
             kernel_stack_top,
