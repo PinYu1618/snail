@@ -1,4 +1,4 @@
-use crate::mm::{PhysPageNr, VPNRange, VirtAddr, VirtPageNr, FrameAllocator, FrameTracker};
+use crate::mm::{PhysPageNr, VPNRange, VirtAddr, VirtPageNr, FrameAllocator, Frame};
 use crate::mm::page::{PTEFlags, PageTable};
 use crate::{config::PAGE_SZ, mm::addr::Step};
 use alloc::collections::BTreeMap;
@@ -21,7 +21,7 @@ bitflags! {
 #[derive(Clone, Debug)]
 pub struct MapArea {
     pub vpn_range: VPNRange,
-    data_frames: BTreeMap<VirtPageNr, FrameTracker>,
+    data_frames: BTreeMap<VirtPageNr, Frame>,
     map_type: MapType,
     map_perm: MapPermission,
 }

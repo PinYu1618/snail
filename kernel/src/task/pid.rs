@@ -1,7 +1,7 @@
 use crate::sync::UPSafeCell;
 use alloc::vec::Vec;
 
-pub struct PidHandle(pub usize);
+pub struct Pid(pub usize);
 pub struct KernelStack(pub usize);
 
 pub struct RecycleAllocator {
@@ -9,8 +9,8 @@ pub struct RecycleAllocator {
     recycled: Vec<usize>,
 }
 
-pub fn alloc_pid() -> PidHandle {
-    PidHandle(PID_ALLOCATOR.exclusive_access().alloc())
+pub fn alloc_pid() -> Pid {
+    Pid(PID_ALLOCATOR.exclusive_access().alloc())
 }
 
 pub fn alloc_kernel_stack() -> KernelStack {
@@ -18,7 +18,7 @@ pub fn alloc_kernel_stack() -> KernelStack {
     use crate::mm::MapPermission;
     let kstack_id = KERNEL_STACK_ALLOCATOR.exclusive_access().alloc();
     let (bottom, top) = kernel_stack_position(kstack_id);
-    KSPACE.exclusive_access().insert_framed_area(
+    KSPACE.exclusive_access().insert_framed(
         bottom.into(), 
         top.into(),
         MapPermission::R | MapPermission::W,
@@ -75,8 +75,8 @@ impl Default for RecycleAllocator {
     }
 }
 
-impl PidHandle {
-    pub fn pid(&self) -> usize {
+impl Pid {
+    pub fn get(&self) -> usize {
         self.0
     }
 }
@@ -86,7 +86,7 @@ impl KernelStack {
         self.0
     }
 
-    pub fn get_top(&self) -> usize {
+    pub fn top(&self) -> usize {
         kernel_stack_top(self.id())
     }
 }

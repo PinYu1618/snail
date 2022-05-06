@@ -135,7 +135,7 @@ impl MemorySet {
         self.page_table.token()
     }
 
-    pub fn insert_framed_area(&mut self, sva: VirtAddr, eva: VirtAddr, perm: MapPermission) {
+    pub fn insert_framed(&mut self, sva: VirtAddr, eva: VirtAddr, perm: MapPermission) {
         self.push(MapArea::new(sva, eva, MapType::Framed, perm), None);
     }
 

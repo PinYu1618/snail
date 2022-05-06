@@ -7,7 +7,7 @@ pub mod page;
 
 // Re-export
 pub use addr::{PhysAddr, PhysPageNr, VPNRange, VirtAddr, VirtPageNr};
-pub use frame::{FrameAllocator, FrameTracker};
+pub use frame::{FrameAllocator, Frame};
 pub use map::{MapArea, MapPermission, MapType};
 pub use memset::*;
 pub use page::{PageTable, PageTableEntry, UserBuffer};

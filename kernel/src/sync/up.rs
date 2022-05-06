@@ -6,6 +6,11 @@ pub struct UPSafeCell<T> {
     inner: RefCell<T>,
 }
 
+pub trait Mutex: Sync + Send {
+    fn lock(&self);
+    fn unlock(&self);
+}
+
 unsafe impl<T> Sync for UPSafeCell<T> {}
 
 impl<T> UPSafeCell<T> {

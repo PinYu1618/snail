@@ -1,35 +1,35 @@
-use crate::{task::{ThreadCtrlBlock, ThreadContext}, sync::UPSafeCell, trap::TrapContext};
+use crate::{task::{Thread, ThreadContext}, sync::UPSafeCell, trap::TrapContext};
 use alloc::sync::Arc;
 
-use super::ProcessCtrlBlock;
+use super::Process;
 
 pub struct Processor {
-    pub current: Option<Arc<ThreadCtrlBlock>>,
+    pub current: Option<Arc<Thread>>,
     pub idle_thread_cx: ThreadContext,
 }
 
-pub fn current_thread() -> Option<Arc<ThreadCtrlBlock>> {
+pub fn current_thread() -> Option<Arc<Thread>> {
     PROCESSOR.exclusive_access().current()
 }
 
-pub fn take_current_thread() -> Option<Arc<ThreadCtrlBlock>> {
+pub fn take_current_thread() -> Option<Arc<Thread>> {
     PROCESSOR.exclusive_access().take_current()
 }
 
-pub fn current_process() -> Arc<ProcessCtrlBlock> {
+pub fn current_process() -> Arc<Process> {
     current_thread().unwrap().process.upgrade().unwrap()
 }
 
 pub fn current_user_token() -> usize {
-    current_thread().unwrap().get_user_token()
+    current_thread().unwrap().user_token()
 }
 
 pub fn get_current_trap_cx_mut() -> &'static mut TrapContext {
-    current_thread().unwrap().get_trap_cx_mut()
+    current_thread().unwrap().trap_cx_mut()
 }
 
 pub fn current_kstack_top() -> usize {
-    current_thread().unwrap().get_kstack_top()
+    current_thread().unwrap().kstack_top()
 }
 
 pub fn schedule(_switched_thread_cx_ptr: *mut ThreadContext) {
@@ -53,7 +53,7 @@ pub fn add_initproc() {
 }
 
 impl Processor {
-    pub fn get_idle_thread_cx_mut(&mut self) -> *mut ThreadContext {
+    pub fn idle_thread_cx_mut(&mut self) -> *mut ThreadContext {
         &mut self.idle_thread_cx as *mut _
     }
 
@@ -64,11 +64,11 @@ impl Processor {
         }
     }
 
-    pub fn current(&self) -> Option<Arc<ThreadCtrlBlock>> {
+    pub fn current(&self) -> Option<Arc<Thread>> {
         self.current.as_ref().map(Arc::clone)
     }
 
-    pub fn take_current(&mut self) -> Option<Arc<ThreadCtrlBlock>> {
+    pub fn take_current(&mut self) -> Option<Arc<Thread>> {
         self.current.take()
     }
 }

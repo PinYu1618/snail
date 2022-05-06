@@ -15,7 +15,7 @@ pub trait FrameAlloc {
 }
 
 #[derive(Clone, Debug)]
-pub struct FrameTracker {
+pub struct Frame {
     pub ppn: PhysPageNr,
 }
 
@@ -26,7 +26,7 @@ pub struct FrameAllocator {
     recycled: Vec<usize>,
 }
 
-impl FrameTracker {
+impl Frame {
     pub fn new(ppn: PhysPageNr) -> Self {
         // page cleaning
         let bytes_arr = ppn.bytes_array();
@@ -37,7 +37,7 @@ impl FrameTracker {
     }
 }
 
-impl Drop for FrameTracker {
+impl Drop for Frame {
     fn drop(&mut self) {
         FrameAllocator::dealloc_frame(self.ppn);
     }
@@ -56,11 +56,11 @@ impl FrameAllocator {
         );
     }
 
-    pub fn alloc_frame() -> Option<FrameTracker> {
+    pub fn alloc_frame() -> Option<Frame> {
         FRAME_ALLOCATOR
             .exclusive_access()
             .alloc()
-            .map(FrameTracker::new)
+            .map(Frame::new)
     }
 
     pub fn dealloc_frame(ppn: PhysPageNr) {

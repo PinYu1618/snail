@@ -1,35 +1,35 @@
-use crate::{sync::{UPSafeCell, Condvar, Semaphore, Mutex}, mm::MemorySet, fs::FileDescriptorTable, task::{ThreadCtrlBlock, PidHandle, RecycleAllocator}};
+use crate::{sync::{UPSafeCell, Condvar, Semaphore, up}, mm::MemorySet, fs::FileDescriptorTable, task::{Thread, Pid, RecycleAllocator}};
 use alloc::{vec::Vec, sync::{Arc, Weak}, string::String};
 use core::cell::RefMut;
 
-pub struct ProcessCtrlBlock {
+pub struct Process {
     // immutable
-    pub pid_handle: PidHandle,
+    pub pid: Pid,
     // mutable
-    inner: UPSafeCell<ProcessCtrlBlockInner>,
+    inner: UPSafeCell<ProcessInner>,
 }
 
-pub struct ProcessCtrlBlockInner {
+pub struct ProcessInner {
     pub is_zombie: bool,
     pub memory_set: MemorySet,
     pub exit_code: i32,
-    pub parent: Option<Weak<ProcessCtrlBlock>>,
-    pub children: Vec<Arc<ProcessCtrlBlock>>,
+    pub parent: Option<Weak<Process>>,
+    pub children: Vec<Arc<Process>>,
     pub fd_table: FileDescriptorTable,
-    pub threads: Vec<Option<Arc<ThreadCtrlBlock>>>,
+    pub threads: Vec<Option<Arc<Thread>>>,
     thread_res_allocator: RecycleAllocator,
-    pub mutex_list: Vec<Option<Arc<dyn Mutex>>>,
+    pub mutex_list: Vec<Option<Arc<dyn up::Mutex>>>,
     pub semaphore_list: Vec<Option<Arc<Semaphore>>>,
     pub condvar_list: Vec<Option<Arc<Condvar>>>,
 }
 
-impl ProcessCtrlBlock {
-    pub fn inner_exclusive_access(&self) -> RefMut<'_, ProcessCtrlBlockInner> {
+impl Process {
+    pub fn inner_exclusive_access(&self) -> RefMut<'_, ProcessInner> {
         self.inner.exclusive_access()
     }
 
     pub fn pid(&self) -> usize {
-        self.pid_handle.pid()
+        self.pid.get()
     }
 
     pub fn new(elf_data: &[u8]) -> Arc<Self> {
@@ -37,25 +37,25 @@ impl ProcessCtrlBlock {
         use crate::trap;
         use crate::mm;
         let (memory_set, ustack_base, entry) = MemorySet::from_elf(elf_data);
-        let pid_handle = task::alloc_pid();
+        let pid = task::alloc_pid();
         let process = Arc::new(
             Self {
-                pid_handle,
-                inner: unsafe { UPSafeCell::new(ProcessCtrlBlockInner::new(memory_set)) }
+                pid,
+                inner: unsafe { UPSafeCell::new(ProcessInner::new(memory_set)) }
             }
         );
         // create a main thread
-        let thread = Arc::new(ThreadCtrlBlock::new(Arc::clone(&process), ustack_base, true));
+        let thread = Arc::new(Thread::new(Arc::clone(&process), ustack_base, true));
         // prepare trap context of main thread
         let thread_inner = thread.inner_exclusive_access();
-        let trap_cx = thread_inner.get_trap_cx_mut();
+        let trap_cx = thread_inner.trap_cx_mut();
         let ustack_top = thread_inner.res.as_ref().unwrap().ustack_top();
         drop(thread_inner);
         *trap_cx = trap::TrapContext::init_app_cx(
             entry,
             ustack_top,
             mm::ktoken(),
-            thread.get_kstack_top(),
+            thread.kstack_top(),
             trap::trap_handler as usize
         );
         // add main thread to the process
@@ -74,12 +74,12 @@ impl ProcessCtrlBlock {
     }
 }
 
-impl ProcessCtrlBlockInner {
+impl ProcessInner {
     pub fn is_zombie(&self) -> bool {
         self.is_zombie
     }
 
-    pub fn get_user_token(&self) -> usize {
+    pub fn user_token(&self) -> usize {
         self.memory_set.token()
     }
 
@@ -87,7 +87,7 @@ impl ProcessCtrlBlockInner {
         self.threads.len()
     }
 
-    pub fn get_thread(&self, tid: usize) -> Arc<ThreadCtrlBlock> {
+    pub fn thread(&self, tid: usize) -> Arc<Thread> {
         self.threads[tid].as_ref().unwrap().clone()
     }
 

@@ -4,7 +4,7 @@ use snail_fs::BlockDevice;
 use alloc::vec::Vec;
 use crate::mm::{
     PhysAddr, PhysPageNr, VirtAddr,
-    addr::Step, FrameAllocator, FrameTracker,
+    addr::Step, FrameAllocator, Frame,
     memset::ktoken, PageTable,
 };
 
@@ -43,7 +43,7 @@ impl BlockDevice for VirtIOBlock {
 }
 
 lazy_static! {
-    static ref QUEUE_FRAMES: Mutex<Vec<FrameTracker>> = Mutex::new(Vec::new());
+    static ref QUEUE_FRAMES: Mutex<Vec<Frame>> = Mutex::new(Vec::new());
 }
 
 #[no_mangle]

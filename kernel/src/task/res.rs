@@ -1,10 +1,10 @@
-use crate::{task::ProcessCtrlBlock, mm::PhysPageNr};
+use crate::{task::Process, mm::PhysPageNr};
 use alloc::sync::{Weak, Arc};
 
 pub struct ThreadUserRes {
     pub tid: usize,
     pub ustack_base: usize,
-    pub process: Weak<ProcessCtrlBlock>,
+    pub process: Weak<Process>,
 }
 
 impl ThreadUserRes {
@@ -39,7 +39,7 @@ impl ThreadUserRes {
         // alloc user stack
         let ustack_bottom = user_stack_bottom(self.ustack_base(), self.tid());
         let ustack_top = ustack_bottom + USTACK_SZ;
-        inner.memory_set.insert_framed_area(
+        inner.memory_set.insert_framed(
             ustack_bottom.into(),
             ustack_top.into(),
             MapPermission::R | MapPermission::W | MapPermission::U,
@@ -47,18 +47,18 @@ impl ThreadUserRes {
         // alloc trap context
         let trap_cx_bottom = trap_cx_bottom(self.tid());
         let trap_cx_top = trap_cx_bottom + PAGE_SZ;
-        inner.memory_set.insert_framed_area(
+        inner.memory_set.insert_framed(
             trap_cx_bottom.into(),
             trap_cx_top.into(),
             MapPermission::R | MapPermission::W,
         );
     }
 
-    pub fn new(_process: Arc<ProcessCtrlBlock>, _ustack_base: usize, _alloc_user_res: bool) -> Self {
+    pub fn new(_process: Arc<Process>, _ustack_base: usize, _alloc_user_res: bool) -> Self {
         todo!()
     }
 
-    pub fn get_trap_cx_ppn(&self) -> PhysPageNr {
+    pub fn trap_cx_ppn(&self) -> PhysPageNr {
         let _process = self.process.upgrade().unwrap();
         let _inner = _process.inner_exclusive_access();
         todo!()

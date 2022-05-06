@@ -7,7 +7,7 @@ mod thread;
 
 pub use context::ThreadContext;
 pub use pid::*;
-pub use process::ProcessCtrlBlock;
+pub use process::Process;
 pub use processor::*;
 pub use res::ThreadUserRes;
 pub use thread::*;

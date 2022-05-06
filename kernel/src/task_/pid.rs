@@ -34,7 +34,7 @@ impl KStack {
     pub fn new(pid_handle: &PidHandle) -> Self {
         let pid = pid_handle.0;
         let (kbp, ksp) = kstack_pos(pid);
-        KSPACE.exclusive_access().insert_framed_area(
+        KSPACE.exclusive_access().insert_framed(
             kbp.into(),
             ksp.into(),
             MapPermission::R | MapPermission::W,

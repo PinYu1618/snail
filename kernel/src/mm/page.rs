@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 use alloc::{string::String, vec};
 
 use super::addr::Step;
-use crate::mm::{PhysAddr, PhysPageNr, VirtAddr, VirtPageNr, FrameAllocator, FrameTracker};
+use crate::mm::{PhysAddr, PhysPageNr, VirtAddr, VirtPageNr, FrameAllocator, Frame};
 
 bitflags! {
     pub struct PTEFlags: u8 {
@@ -20,7 +20,7 @@ bitflags! {
 #[derive(Clone, Debug)]
 pub struct PageTable {
     root_ppn: PhysPageNr,
-    frames: Vec<FrameTracker>,
+    frames: Vec<Frame>,
 }
 
 #[derive(Copy, Clone)]

@@ -20,7 +20,6 @@ pub mod drivers;
 mod errno;
 pub mod fs;
 pub mod mm;
-mod runtime;
 pub mod sbi;
 pub mod sync;
 pub mod syscall;
