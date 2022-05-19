@@ -5,6 +5,7 @@ authors = ["PinYu1618 <pinyuchen658503@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-riscv = { git = "https://github.com/rcore-os/riscv", features = ["inline-asm"] }
+libc = "0.2"
+riscv = "0.8.0"
 bitflags = "1.2.1"
 buddy_system_allocator = "0.6"

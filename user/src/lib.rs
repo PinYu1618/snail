@@ -1,8 +1,7 @@
 #![feature(linkage)]
 #![feature(panic_info_message)]
 #![feature(alloc_error_handler)]
-#![no_std]
-#![allow(unused)]
+#![cfg_attr(not(test), no_std)]
 
 #[macro_use]
 extern crate bitflags;
@@ -11,7 +10,8 @@ extern crate alloc;
 #[macro_use]
 pub mod console;
 mod lang;
-mod syscall;
+mod sys;
+pub mod syscall;
 
 use alloc::vec::Vec;
 use buddy_system_allocator::LockedHeap;
@@ -28,97 +28,6 @@ static HEAP: LockedHeap = LockedHeap::empty();
 pub fn handle_alloc_error(layout: core::alloc::Layout) -> ! {
     panic!("Heap allocation error, layout = {:?}", layout);
 }
-
-bitflags! {
-    pub struct OpenFlags: u32 {
-        const RDONLY = 0;
-        const WRONLY = 1 << 0;
-        const RDWR = 1 << 1;
-        const CREATE = 1 << 9;
-        const TRUNC = 1 << 10;
-    }
-}
-
-pub fn open(path: &str, flags: OpenFlags) -> isize {
-    sys_open(path, flags.bits)
-}
-
-pub fn close(fd: usize) -> isize {
-    sys_close(fd)
-}
-
-pub fn pipe(pipe_fd: &mut [usize]) -> isize {
-    sys_pipe(pipe_fd)
-}
-
-pub fn read(fd: usize, buf: &mut [u8]) -> isize {
-    sys_read(fd, buf)
-}
-
-pub fn write(fd: usize, buf: &[u8]) -> isize {
-    sys_write(fd, buf)
-}
-
-pub fn exit(exit_code: i32) -> ! {
-    sys_exit(exit_code);
-}
-
-pub fn yield_() -> isize {
-    sys_yield()
-}
-
-pub fn wait(exit_code: &mut i32) -> isize {
-    loop {
-        match sys_waitpid(-1, exit_code as *mut _) {
-            -2 => {
-                yield_();
-            }
-            // -1 or a real pid
-            exit_pid => return exit_pid,
-        }
-    }
-}
-
-pub fn waitpid(pid: usize, exit_code: &mut i32) -> isize {
-    loop {
-        match sys_waitpid(pid as isize, exit_code as *mut _) {
-            -2 => {
-                yield_();
-            }
-            // -1 or a real pid
-            exit_pid => return exit_pid,
-        }
-    }
-}
-
-pub fn fork() -> isize {
-    sys_fork()
-}
-
-pub fn exec(path: &str) -> isize {
-    sys_exec(path)
-}
-
-pub fn fstat(fd: i32, st: *mut Stat) -> i32 {
-    unimplemented!()
-}
-
-pub fn unlinkat(dirfd: i32, path: *const u8, flags: u32) -> i32 {
-    unimplemented!()
-}
-
-pub fn linkat(
-    olddirfd: i32,
-    oldpath: *const u8,
-    newdirfd: i32,
-    newpath: *const u8,
-    flags: u32,
-) -> i32 {
-    unimplemented!()
-}
-
-// ^TODO
-pub struct Stat;
 
 #[no_mangle]
 #[link_section = ".text.entry"]
