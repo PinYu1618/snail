@@ -1,7 +1,9 @@
 #![no_std]
 #![cfg_attr(test, no_main)]
+#![feature(asm_sym, asm_const)]
 #![feature(alloc_error_handler)]
 #![feature(custom_test_frameworks)]
+#![feature(naked_functions)]
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
@@ -21,6 +23,7 @@ mod errno;
 pub mod fs;
 pub mod mm;
 pub mod sbi;
+pub mod signal;
 pub mod sync;
 pub mod syscall;
 pub mod task;

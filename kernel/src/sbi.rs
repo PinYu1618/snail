@@ -1,3 +1,4 @@
+#![cfg(target_arch = "riscv64")]
 #![allow(unused)]
 
 use core::arch::asm;

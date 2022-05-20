@@ -1,0 +1,10 @@
+[package]
+name = "drivers"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+virtio-drivers = { git = "https://github.com/PinYu1618/virtio-drivers" }
+volatile-register = "0.2"
