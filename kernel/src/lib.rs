@@ -22,7 +22,7 @@ pub mod drivers;
 mod errno;
 pub mod fs;
 pub mod mm;
-pub mod sbi;
+mod sbi;
 pub mod signal;
 pub mod sync;
 pub mod syscall;

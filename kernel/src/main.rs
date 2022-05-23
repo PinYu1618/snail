@@ -1,45 +1,60 @@
 #![no_std]
 #![no_main]
+#![feature(asm_sym, asm_const)]
 #![feature(alloc_error_handler)]
 #![feature(custom_test_frameworks)]
+#![feature(naked_functions)]
 #![test_runner(snail::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
 #[macro_use]
+extern crate cfg_if;
+#[macro_use]
 extern crate log;
 extern crate alloc;
 
-use core::arch::global_asm;
+mod memory;
+
+cfg_if! {
+    if #[cfg(target_arch = "riscv64")] {
+        #[path ="./arch/riscv/mod.rs"]
+        mod arch;
+    }
+}
+
+use arch_hal as hal;
 use core::panic::PanicInfo;
+use core::sync::atomic::AtomicBool;
+use core::sync::atomic::Ordering;
 pub use snail::println;
 
+static STARTED: AtomicBool = AtomicBool::new(false);
+
 #[no_mangle]
-pub extern "C" fn kmain() -> ! {
-    clear_bss();
+extern "C" fn kprimary_main() -> ! {
     snail::logging::init().unwrap();
-    snail::mm::init();
-    snail::trap::init();
-    snail::trap::enable_timer_interrupt();
-    snail::timer::Timer::set_next_trigger();
-    snail::fs::list_all_apps();
-    snail::task_::add_initproc();
-    info!("Hyy, there.");
+    memory::init_heap();
+
+    hal::primary_init();
+    STARTED.store(true, Ordering::SeqCst);
 
     #[cfg(test)]
     test_main();
 
-    loop {}
+    todo!()
 }
 
-fn clear_bss() {
-    extern "C" {
-        fn sbss();
-        fn ebss();
+#[no_mangle]
+extern "C" fn ksecondary_main() -> ! {
+    while !STARTED.load(Ordering::SeqCst) {
+        core::hint::spin_loop();
     }
-    (sbss as usize..ebss as usize).for_each(|a| unsafe { (a as *mut u8).write_volatile(0) });
-}
 
-global_asm!(include_str!("entry.s"));
+    hal::secondary_init();
+    info!("[Hart {}] init.", hal::cpu::id());
+
+    todo!()
+}
 
 /// This function is called on panic.
 #[cfg(not(test))]

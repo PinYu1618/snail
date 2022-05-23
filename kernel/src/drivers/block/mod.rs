@@ -1,6 +1,6 @@
 pub mod virtio_blk;
 
-use snail_fs::BlockDevice;
+use fs::BlockDevice;
 use alloc::sync::Arc;
 
 type BlockDevImpl = virtio_blk::VirtIOBlock;

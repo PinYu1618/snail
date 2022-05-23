@@ -1,7 +1,8 @@
 use super::addr::{PhysAddr, PhysPageNr};
-use crate::config::MEM_END;
 use crate::sync::UPSafeCell;
 use alloc::vec::Vec;
+
+pub const MEM_END: usize = 10000;
 
 lazy_static! {
     static ref FRAME_ALLOCATOR: UPSafeCell<FrameAllocImpl> =

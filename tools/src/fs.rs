@@ -1,4 +1,4 @@
-use snail_fs::{BlockDevice, SnailFileSystem};
+use fs::{BlockDevice, SnailFileSystem};
 use std::{
     fs::{read_dir, File, OpenOptions},
     io::{Read, Seek, SeekFrom, Write},

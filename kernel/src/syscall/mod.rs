@@ -3,8 +3,16 @@
 pub mod fs;
 pub mod process;
 
-use fs::*;
+use crate::syscall::fs::*;
 use process::*;
+
+pub struct Syscall {
+    //
+}
+
+pub struct CurrentThread {
+    //
+}
 
 const NR_OPEN: usize = 56;
 const NR_CLOSE: usize = 57;
@@ -33,4 +41,28 @@ pub fn syscall(id: usize, args: [usize; 3]) -> isize {
         NR_FORK => sys_fork(),
         _ => panic!("[kernel] Unsupported syscall_id: {}", id),
     }
+}
+
+pub fn sys_clock_get_monotonic() {
+    todo!()
+}
+
+pub fn sys_nanosleep() {
+    todo!()
+}
+
+pub fn sys_channel_write() {
+    todo!()
+}
+
+pub fn sys_port_queue() {
+    todo!()
+}
+
+pub fn sys_event_create() {
+    todo!()
+}
+
+pub fn sys_channel_create() {
+    todo!()
 }

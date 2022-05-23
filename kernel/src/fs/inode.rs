@@ -1,5 +1,5 @@
 use spin::Mutex;
-use snail_fs::{Inode, SnailFileSystem};
+use fs::{Inode, SnailFileSystem};
 use crate::{drivers::block::BLOCK_DEV, fs::File, mm::UserBuffer};
 use alloc::{sync::Arc, vec::Vec};
 

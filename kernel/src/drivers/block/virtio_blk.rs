@@ -1,6 +1,6 @@
 use spin::Mutex;
 use virtio_drivers::{VirtIOBlk, VirtIOHeader};
-use snail_fs::BlockDevice;
+use fs::BlockDevice;
 use alloc::vec::Vec;
 use crate::mm::{
     PhysAddr, PhysPageNr, VirtAddr,

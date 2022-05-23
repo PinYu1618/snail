@@ -10,7 +10,7 @@ use alloc::vec::Vec;
 use alloc::sync::Arc;
 
 pub fn sys_exit(_xstate: i32) -> ! {
-    unimplemented!()
+    todo!()
 }
 
 /// func:

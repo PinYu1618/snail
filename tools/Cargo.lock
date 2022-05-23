@@ -65,6 +65,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "fs"
+version = "0.1.0"
+dependencies = [
+ "lazy_static",
+ "spin",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -159,14 +167,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "snail-fs"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "spin",
-]
-
-[[package]]
 name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -209,7 +209,7 @@ name = "tools"
 version = "0.1.0"
 dependencies = [
  "clap",
- "snail-fs",
+ "fs",
 ]
 
 [[package]]

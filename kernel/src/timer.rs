@@ -1,4 +1,3 @@
-use crate::config::CLOCK_FREQ;
 use crate::sbi::set_timer;
 use riscv::register::time;
 
@@ -20,3 +19,5 @@ impl Timer {
         time::read() / (CLOCK_FREQ / K_PER_SEC)
     }
 }
+
+const CLOCK_FREQ: usize = 100;

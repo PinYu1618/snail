@@ -15,10 +15,10 @@ bitflags! {
     }
 }
 
-pub fn sys_sigaction(signum: i32, action: *const SignalAction, old_action: *mut SignalAction) -> isize {
+pub fn sys_sigaction(_signum: i32, _action: *const SignalAction, _old_action: *mut SignalAction) -> isize {
     todo!()
 }
 
-pub fn sys_kill(pid: usize, signum: i32) -> isize {
+pub fn sys_kill(_pid: usize, _signum: i32) -> isize {
     todo!()
 }

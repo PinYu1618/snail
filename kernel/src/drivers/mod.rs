@@ -1,5 +1,4 @@
 pub mod block;
-mod ns16550a;
 
 pub trait CharDevice {
     fn read(&self) -> u8;
