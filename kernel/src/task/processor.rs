@@ -88,7 +88,7 @@ lazy_static! {
 
 #[naked]
 #[link_section = ".text"]
-pub unsafe extern "C" fn switch(_current_task_cx_ptr: *mut ThreadContext, _next_task_cx_ptr: *const ThreadContext) {
+pub unsafe extern "C" fn switch(current_task_cx_ptr: *mut ThreadContext, next_task_cx_ptr: *const ThreadContext) {
     asm!(
         "sd sp, 8(a0)",
         "sd ra, 0(a0)",

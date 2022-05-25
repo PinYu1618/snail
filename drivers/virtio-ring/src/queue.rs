@@ -1,24 +1,20 @@
-use crate::{desc::Descriptor, avail::AvailRing, used::UsedRing};
+//! Ref: linux/drivers/virtio/virtio_ring.c
+
+use crate::{desc::Desc, avail::Avail, used::Used};
 
 #[repr(C)]
-pub struct Queue<'a> {
+pub struct VirtioQueue<'a> {
     /// DMA guard
     //dma: DMA,
-    /// Descriptor table
-    desc: &'a mut [Descriptor],
-    /// Available ring
-    avail: &'a mut AvailRing,
-    /// Used ring
-    used: &'a mut UsedRing,
+    pub desc: &'a mut [Desc],
+    pub avail: &'a mut Avail,
+    pub used: &'a mut Used,
 
-    /// The index of queue
+    pub avail_idx: u16,
+    
     queue_idx: u32,
-    /// The size of queue
     queue_size: u16,
-    /// The number of used queues.
     num_used: u16,
-    /// The head desc index of the free list.
-    free_head: u16,
-    avail_idx: u16,
-    last_used_idx: u16,
+    pub free_head: u16,
+    pub last_used_idx: u16,
 }

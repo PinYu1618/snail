@@ -1,10 +1,13 @@
-mod avail;
-mod desc;
-mod used;
-mod queue;
+//! Ref: linux/include/uapi/linux/virtio_ring.h
 
-#[macro_use]
-extern crate bitflags;
+use enumflags2::bitflags;
+
+pub mod avail;
+pub mod desc;
+pub mod dma;
+pub mod packed;
+pub mod used;
+mod queue;
 
 pub type Result<T = ()> = core::result::Result<T, Error>;
 
@@ -24,4 +27,19 @@ pub enum Error {
     IoError,
 }
 
-pub use queue::Queue;
+pub use queue::VirtioQueue;
+
+#[bitflags]
+#[repr(u64)]
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum Feature {
+    IndirectDesc = 1 << 28,
+    EventIdx = 1 << 29,
+
+    Version1 = 1 << 32,
+    AccessPlatform = 1 << 33,
+    RingPacked = 1 << 34,
+    InOrder = 1 << 35,
+    OrderPlatform = 1 << 36,
+    SrIov = 1 << 37,
+}

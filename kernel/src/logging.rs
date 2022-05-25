@@ -1,4 +1,4 @@
-use crate::sbi::console_putchar;
+use hal::sbi::legacy_console_putchar;
 use core::fmt::{self, Write};
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 
@@ -9,7 +9,7 @@ struct Stdout;
 impl fmt::Write for Stdout {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         for c in s.chars() {
-            console_putchar(c as usize);
+            legacy_console_putchar(c as usize);
         }
         Ok(())
     }

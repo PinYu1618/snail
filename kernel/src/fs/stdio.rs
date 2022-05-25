@@ -1,6 +1,6 @@
 use crate::fs::File;
 use crate::mm::UserBuffer;
-use crate::sbi::console_getchar;
+use hal::sbi::legacy_console_getchar;
 use crate::task_::Processor;
 
 /// Stdin.
@@ -12,7 +12,7 @@ impl File for Stdin {
         assert_eq!(buf.len(), 1);
         let mut c: usize;
         loop {
-            c = console_getchar();
+            c = legacy_console_getchar();
             if c == 0 {
                 Processor::suspend_current_and_run_next();
                 continue;

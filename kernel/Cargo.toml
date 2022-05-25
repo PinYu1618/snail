@@ -31,4 +31,4 @@ virtio-drivers = { git = "https://github.com/rcore-os/virtio-drivers" }
 fs = { path = "../fs/core" }
 
 [target.'cfg(target_arch = "riscv64")'.dependencies]
-arch-hal = { package = "riscv", path = "../arch/riscv" }
+arch-hal = { package = "riscv64", path = "../arch/riscv64" }

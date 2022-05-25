@@ -14,6 +14,7 @@ extern crate bitflags;
 #[macro_use]
 extern crate lazy_static;
 extern crate alloc;
+extern crate arch_hal as hal;
 
 #[macro_use]
 pub mod logging;
@@ -21,8 +22,8 @@ pub mod config;
 pub mod drivers;
 mod errno;
 pub mod fs;
+pub mod memory;
 pub mod mm;
-mod sbi;
 pub mod signal;
 pub mod sync;
 pub mod syscall;

@@ -1,8 +1,4 @@
-use crate::{Rectangle, CtrlHeader, format::ColorFormat};
-
-pub enum Req {
-    ResourceAttachBacking,
-}
+use crate::{Rectangle, inner::CtrlHeader, format::ColorFormat};
 
 #[repr(C)]
 pub struct ResourceAttachBacking {
@@ -25,10 +21,10 @@ pub struct ResourceCreate2D {
 
 #[repr(C)]
 pub struct ResourceFlush {
-    header: CtrlHeader,
-    rect: Rectangle,
-    resource_id: u32,
-    _padding: u32,
+    pub header: CtrlHeader,
+    pub rect: Rectangle,
+    pub resource_id: u32,
+    pub padding: u32,
 }
 
 #[repr(C)]
@@ -45,17 +41,17 @@ pub struct TransferToHost2D {
     pub rect: Rectangle,
     pub offset: u64,
     pub resource_id: u32,
-    _padding: u32,
+    pub padding: u32,
 }
 
 #[repr(C)]
 pub struct UpdateCursor {
-    header: CtrlHeader,
-    pos: CursorPosition,
-    resource_id: u32,
-    hot_x: u32,
-    hot_y: u32,
-    _padding: u32,
+    pub header: CtrlHeader,
+    pub pos: CursorPosition,
+    pub resource_id: u32,
+    pub hot_x: u32,
+    pub hot_y: u32,
+    pub padding: u32,
 }
 
 #[repr(C)]
@@ -63,11 +59,11 @@ pub struct CursorPosition {
     pub scanout_id: u32,
     pub x: u32,
     pub y: u32,
-    _padding: u32,
+    pub padding: u32,
 }
 
 impl TryFrom<Position2D> for CursorPosition {
-    type Error = Error;
+    type Error = virtio::Error;
     fn try_from(_value: Position2D) -> Result<Self, Self::Error> {
         todo!()
     }
@@ -109,10 +105,6 @@ pub struct Position3D {
     pub x: usize,
     pub y: usize,
     pub z: usize,
-}
-
-pub enum Error {
-    InvalidCursorPos = -1,
 }
 
 #[repr(C)]

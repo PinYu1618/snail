@@ -109,7 +109,7 @@ impl MemorySet {
         );
 
         info!("Mapping mem mapped IO...");
-        for pair in MMIO {
+        for pair in hal::MMIO {
             memset.push(
                 MapArea::new(
                     (*pair).0.into(),

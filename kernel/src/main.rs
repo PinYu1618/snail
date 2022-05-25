@@ -8,19 +8,8 @@
 #![reexport_test_harness_main = "test_main"]
 
 #[macro_use]
-extern crate cfg_if;
-#[macro_use]
 extern crate log;
 extern crate alloc;
-
-mod memory;
-
-cfg_if! {
-    if #[cfg(target_arch = "riscv64")] {
-        #[path ="./arch/riscv/mod.rs"]
-        mod arch;
-    }
-}
 
 use arch_hal as hal;
 use core::panic::PanicInfo;
@@ -33,7 +22,7 @@ static STARTED: AtomicBool = AtomicBool::new(false);
 #[no_mangle]
 extern "C" fn kprimary_main() -> ! {
     snail::logging::init().unwrap();
-    memory::init_heap();
+    snail::memory::init_heap();
 
     hal::primary_init();
     STARTED.store(true, Ordering::SeqCst);

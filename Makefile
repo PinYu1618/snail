@@ -5,18 +5,18 @@
 #   make clean
 #
 # Options:
-# 	ARCH = riscv64 | x86_64
+# 	ARCH = riscv64gc | riscv64imac | x86_64
 #	MODE = debug | release
 
 ARCH ?= riscv64
-MODE ?= debug
+MODE ?= release
 LOG ?=
 
 ###### target triple ######
 ifeq ($(ARCH), riscv64)
-target_triple = riscv64gc-unknown-none-elf
+	target_triple = riscv64gc-unknown-none-elf
 else ifeq ($(ARCH), x86_64)
-target_triple = x86_64-unknown-none
+	target_triple = x86_64-unknown-none
 endif
 
 build_dir := target/$(target_triple)/$(MODE)
@@ -46,7 +46,7 @@ endif
 ifeq ($(ARCH), riscv64)
 qemu_opts = \
 	-machine virt \
-	-bios $(build_dir)/boot-riscv64.bin \
+	-bios firmware/rustsbi-riscv64gc.bin \
 	-device loader,addr=0x80200000,file=$(kernel_bin) \
 	-drive file=$(app_img),if=none,format=raw,id=x0 \
 	-device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0 \
