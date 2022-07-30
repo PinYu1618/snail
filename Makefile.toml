@@ -1,0 +1,28 @@
+[env]
+CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+BUILD_DIR = "${CARGO_MAKE_WORKSPACE_WORKING_DIRECTORY}/target/riscv64gc-unknown-none-elf/release"
+KERNEL_ELF = "${BUILD_DIR}/kernel"
+KERNEL_BIN = "${KERNEL_ELF}.bin"
+
+[tasks.run]
+command = "/home/pycc/qemu-5.0.0/riscv64-softmmu/qemu-system-riscv64"
+args = [
+    "-machine", "virt",
+    "-bios", "default",
+    "-device", "loader,addr=0x80200000,file=${KERNEL_BIN}",
+]
+
+[tasks.build]
+dependencies = [
+    "kernel_elf",
+    "kernel_bin",
+]
+
+[tasks.kernel_elf]
+command = "cargo"
+args = ["build", "--package", "kernel", "--release"]
+
+[tasks.kernel_bin]
+command = "rust-objcopy"
+args = ["--binary-architecture=riscv64", "${KERNEL_ELF}", "--strip-all", "-O", "binary", "${KERNEL_BIN}"]
+dependencies = ["kernel_elf"]
